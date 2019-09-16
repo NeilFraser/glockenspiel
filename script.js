@@ -91,25 +91,77 @@ Music.canSubmit = false;
 Music.REST = -1;
 
 /**
+ * Array of editor tabs (Blockly and ACE).
+ * @type Array.<!Element>
+ */
+Music.editorTabs = null;
+
+/**
+ * Is the blocks editor the program source (true) or is the JS editor
+ * the program source (false).
+ * @private
+ */
+Music.blocksEnabled_ = true;
+
+/**
+ * ACE editor fires change events even on programmatically caused changes.
+ * This property is used to signal times when a programmatic change is made.
+ */
+Music.ignoreEditorChanges_ = true;
+
+/**
  * Initialize Blockly and the music.  Called on page load.
  */
 Music.init = function() {
-
   // Switch to zero-based indexing so that later JS levels match the blocks.
   Blockly.Blocks.ONE_BASED_INDEXING = false;
   Blockly.JavaScript.ONE_BASED_INDEXING = false;
 
-  var blocklyDiv = document.getElementById('blockly');
+  // Setup the tabs.
+  function tabHandler(selectedIndex) {
+    return function() {
+      if (Blockly.utils.dom.hasClass(Music.editorTabs[selectedIndex],'tab-disabled')) {
+        return;
+      }
+      for (var i = 0; i < Music.editorTabs.length; i++) {
+        if (selectedIndex == i) {
+          Blockly.utils.dom.addClass(Music.editorTabs[i], 'tab-selected');
+        } else {
+          Blockly.utils.dom.removeClass(Music.editorTabs[i], 'tab-selected');
+        }
+      }
+      Music.changeTab(selectedIndex);
+    };
+  }
+  Music.editorTabs = Array.prototype.slice.call(
+      document.querySelectorAll('#editorBar>.tab'));
+  for (var i = 0; i < Music.editorTabs.length; i++) {
+    Music.bindClick(Music.editorTabs[i], tabHandler(i));
+  }
+
   var paddingBox = document.getElementById('paddingBox');
   var staveBox = document.getElementById('staveBox');
   var musicBox = document.getElementById('musicBox');
+  var tabDiv = document.getElementById('tabarea');
+  var blocklyDiv = document.getElementById('blockly');
+  var editorDiv = document.getElementById('editor');
+  var divs = [blocklyDiv, editorDiv];
   var onresize = function(e) {
     var top = paddingBox.offsetTop;
     staveBox.style.top = top + 'px';
     musicBox.style.top = top + 'px';
-    blocklyDiv.style.top = Math.max(10, top - window.pageYOffset) + 'px';
-    blocklyDiv.style.left = '420px';
-    blocklyDiv.style.width = (window.innerWidth - 440) + 'px';
+    tabDiv.style.top = (top - window.pageYOffset) + 'px';
+    tabDiv.style.left = '420px';
+    tabDiv.style.width = (window.innerWidth - 440) + 'px';
+    var divTop =
+        Math.max(0, top + tabDiv.offsetHeight - window.pageYOffset) + 'px';
+    var divLeft = '420px';
+    var divWidth = (window.innerWidth - 440) + 'px';
+    for (var i = 0, div; div = divs[i]; i++) {
+      div.style.top = divTop;
+      div.style.left = divLeft;
+      div.style.width = divWidth;
+    }
   };
   window.addEventListener('scroll', function() {
       onresize(null);
@@ -117,6 +169,20 @@ Music.init = function() {
     });
   window.addEventListener('resize', onresize);
   onresize(null);
+
+  // Inject JS editor.
+  var defaultCode = 'play(7);';
+  Music.editor = window['ace']['edit']('editor');
+  Music.editor['setTheme']('ace/theme/chrome');
+  Music.editor['setShowPrintMargin'](false);
+  var session = Music.editor['getSession']();
+  session['setMode']('ace/mode/javascript');
+  session['setTabSize'](2);
+  session['setUseSoftTabs'](true);
+  session['on']('change', Music.editorChanged);
+  Music.editor['setValue'](defaultCode, -1);
+
+  // Inject Blockly
   var toolbox = document.getElementById('toolbox');
   Music.workspace = Blockly.inject('blockly',
       {'disable': false,
@@ -147,7 +213,7 @@ Music.init = function() {
       '<xml>' +
         '<block type="music_start" x="180" y="50"></block>' +
       '</xml>';
-      
+
   var xml = Blockly.Xml.textToDom(defaultXml);
   // Clear the workspace to avoid merge.
   Music.workspace.clear();
@@ -155,6 +221,8 @@ Music.init = function() {
   Music.workspace.clearUndo();
 
   Music.reset();
+  Music.changeTab(0);
+  Music.ignoreEditorChanges_ = false;
 
   Music.bindClick('runButton', Music.runButtonClick);
   Music.bindClick('resetButton', Music.resetButtonClick);
@@ -174,6 +242,77 @@ Music.init = function() {
 };
 
 window.addEventListener('load', Music.init);
+
+/**
+ * Called by the tab bar when a tab is selected.
+ * @param {number} index Which tab is now active (0-1).
+ */
+Music.changeTab = function(index) {
+  var BLOCKS = 0;
+  var JAVASCRIPT = 1;
+  // Show the correct tab contents.
+  var names = ['blockly', 'editor'];
+  for (var i = 0, name; name = names[i]; i++) {
+    var div = document.getElementById(name);
+    div.style.visibility = (i == index) ? 'visible' : 'hidden';
+  }
+  // Show/hide Blockly divs.
+  var names = ['.blocklyTooltipDiv', '.blocklyToolboxDiv'];
+  for (var i = 0, name; name = names[i]; i++) {
+    var div = document.querySelector(name);
+    div.style.visibility = (index == BLOCKS) ? 'visible' : 'hidden';
+  }
+  // Synchronize the JS editor.
+  if (index == JAVASCRIPT && Music.blocksEnabled_) {
+    var code = Music.blocksToCode();
+    Music.ignoreEditorChanges_ = true;
+    Music.editor['setValue'](code, -1);
+    Music.ignoreEditorChanges_ = false;
+  }
+};
+
+Music.blocksToCode = function() {
+  // For safety, recompute startCount in the generator.
+  Music.startCount = 0;
+  var code = Blockly.JavaScript.workspaceToCode(Music.workspace);
+  var header = '';
+  for (var i = 1; i <= Music.startCount; i++) {
+    header += 'runThread(start' + i + ');\n';
+  }
+  return header + '\n' + code;
+};
+
+/**
+ * Change event for JS editor.  Warn the user, then disconnect the link from
+ * blocks to JavaScript.
+ */
+Music.editorChanged = function() {
+  if (Music.ignoreEditorChanges_) {
+    return;
+  }
+  if (Music.blocksEnabled_) {
+    if (!Music.workspace.getTopBlocks(false).length ||
+        confirm('Once you start editing JavaScript, you can\'t go back to editing blocks. Is this OK?')) {
+      // Break link betweeen blocks and JS.
+      Blockly.utils.dom.addClass(Music.editorTabs[0], 'tab-disabled');
+      Music.blocksEnabled_ = false;
+    } else {
+      // Abort change, preserve link.
+      var code = Music.blocksToCode();
+      Music.ignoreEditorChanges_ = true;
+      Music.editor['setValue'](code, -1);
+      Music.ignoreEditorChanges_ = false;
+    }
+  } else {
+    var code = Music.editor['getValue']();
+    if (!code.trim()) {
+      // Reestablish link between blocks and JS.
+      Music.workspace.clear();
+      Blockly.utils.dom.removeClass(Music.editorTabs[0], 'tab-disabled');
+      Music.blocksEnabled_ = true;
+    }
+  }
+};
 
 /**
  * Bind a function to a button's click event.
@@ -345,23 +484,6 @@ Music.hideHelp = function() {
 };
 
 /**
- * Show the help pop-up to encourage clicking on the toolbox categories.
- */
-Music.showCategoryHelp = function() {
-  if (Music.categoryClicked_ || MusicDialogs.isDialogVisible_) {
-    return;
-  }
-  var help = document.getElementById('helpToolbox');
-  var style = {
-    width: '25%',
-    left: '525px',
-    top: '3.3em'
-  };
-  var origin = document.getElementById(':0');  // Toolbox's tree root.
-  MusicDialogs.showDialog(help, origin, true, false, style, null);
-};
-
-/**
  * Ensure that there aren't more than the maximum allowed start blocks.
  * @param {!Blockly.Events.Abstract} e Change event.
  */
@@ -518,10 +640,15 @@ Music.execute = function() {
   }
   Music.reset();
   Blockly.selected && Blockly.selected.unselect();
-  // For safety, recompute startCount in the generator.
-  Music.startCount = 0;
+
   // Create an interpreter whose global scope will be the cross-thread global.
-  var code = Blockly.JavaScript.workspaceToCode(Music.workspace);
+  var code;
+  if (Music.blocksEnabled_) {
+    code = Music.blocksToCode();
+  } else {
+    code = Music.editor['getValue']();
+  }
+  console.log(code);
   if (Music.startCount == 0) {  // Blank workspace.
     Music.resetButtonClick();
   }

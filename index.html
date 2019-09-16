@@ -13,6 +13,7 @@
     <script src="slider.js"></script>
     <script src="soundjs.min.js"></script>
     <script src="lib-dialogs.js"></script>
+    <script src="ace/ace.js"></script>
     <script src="script.js"></script>
   </head>
   <body>
@@ -71,6 +72,17 @@
         </td>
       </tr>
     </table>
+    
+    <div id="tabarea">
+      <div id="editorBar" class="tab-bar">
+        <div class="tab tab-selected">Blocks</div>
+        <div class="tab">JavaScript</div>
+      </div>
+      <div class="tab-bar-clear"></div>
+      <div id="blockly"></div>
+      <div id="editor"></div>
+    </div>
+    
     <xml id="toolbox" style="display: none">
       <category name="Music">
         <block type="music_pitch">
@@ -258,7 +270,7 @@
       <category name="Variables" custom="VARIABLE"></category>
       <category name="Functions" custom="PROCEDURE"></category>
     </xml>
-    <div id="blockly"></div>
+    
     <div id="dialogShadow" class="dialogAnimate"></div>
     <div id="dialogBorder"></div>
     <div id="dialog"></div>
