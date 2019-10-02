@@ -2,7 +2,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Glockenspiel</title>
+    <title>Blockly Glockenspiel</title>
     <link rel="stylesheet" href="style.css">
     <script src="third-party/ace/ace.js"></script>
     <script src="third-party/blockly/blockly_compressed.js"></script>
@@ -20,7 +20,7 @@
       <tbody>
         <tr>
           <td>
-            <h1>Glockenspiel</h1>
+            <h1>Blockly Glockenspiel</h1>
           </td>
           <td class="farSide">
             <button id="helpButton">Help</button>
@@ -35,7 +35,7 @@
     </div>
     <table style="padding-top: 1em;">
       <tr>
-        <td style="width: 190px; text-align: center; vertical-align: top;">
+        <td style="width: 173px; text-align: center; vertical-align: top;">
           <svg
               id="slider"
               xmlns="http://www.w3.org/2000/svg"
@@ -58,14 +58,14 @@
                 clip-path="url(#fastClipPath)" />
           </svg>
         </td>
-        <td style="width: 15px;">
-          <img id="spinner" style="visibility: hidden;" src="loading.gif" height=15 width=15>
+        <td style="width: 40px";>
+          <img id="spinner" style="visibility: hidden;" src="loading.gif">
         </td>
-        <td style="width: 190px; text-align: center">
+        <td style="width: 173px; text-align: center">
           <button id="runButton" class="primary" title="Run the program you wrote.">
             <img src="1x1.gif" class="run icon21">Run Program
           </button>
-          <button id="resetButton" class="primary" style="display: none" title="Stop the program and reset the level.">
+          <button id="resetButton" class="primary" style="display: none" title="Stop the program you wrote.">
             <img src="1x1.gif" class="stop icon21">Reset
           </button>
         </td>

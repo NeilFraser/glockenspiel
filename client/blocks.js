@@ -1,8 +1,6 @@
 /**
- * Blockly Games: Music Blocks
- *
- * Copyright 2012 Google Inc.
- * https://github.com/google/blockly-games
+ * @license
+ * Copyright 2012 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +28,7 @@ Blockly.Blocks['music_pitch'] = {
    */
   init: function() {
     this.appendDummyInput()
-        .appendField(new Music.FieldPitch('7'), 'PITCH');
+        .appendField(new FieldPitch('7'), 'PITCH');
     this.setOutput(true, 'Number');
     this.setColour(Blockly.Msg['MATH_HUE']);
     this.setTooltip('One note (C4 is 7).');
@@ -49,15 +47,15 @@ Blockly.Blocks['music_note'] = {
    */
   init: function() {
     var options = [
-      [{"src": "notes/1.png",
+      [{"src": "notes/1-low.png",
         "width": 9, "height": 19, "alt": "whole"}, "1"],
-      [{"src": "notes/0.5.png",
+      [{"src": "notes/0.5-low.png",
         "width": 9, "height": 19, "alt": "half"}, "0.5"],
-      [{"src": "notes/0.25.png",
+      [{"src": "notes/0.25-low.png",
         "width": 9, "height": 19, "alt": "quarter"}, "0.25"],
-      [{"src": "notes/0.125.png",
+      [{"src": "notes/0.125-low.png",
         "width": 9, "height": 19, "alt": "eighth"}, "0.125"],
-      [{"src": "notes/0.0625.png",
+      [{"src": "notes/0.0625-low.png",
         "width": 9, "height": 19, "alt": "sixteenth"}, "0.0625"]
     ];
     this.jsonInit({

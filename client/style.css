@@ -226,7 +226,14 @@ button.primary {
   position: absolute;
 }
 
-.note {
+.stave-15 {
+  height: 11px;
+  width: 14px;
+  position: absolute;
+}
+
+.note-low,
+.note-high {
   height: 37px;
   position: absolute;
 }
@@ -236,15 +243,26 @@ button.primary {
   position: absolute;
 }
 
+.flat {
+  height: 19px;
+  position: absolute;
+}
+
 .splash {
   transition-property: height, opacity, width, margin;
   transition-duration: .3s;
   opacity: 0;
 }
 
-.splash.note {
+.splash.note-low {
   margin-left: -10px;
   margin-top: -30px;
+  height: 74px;
+}
+
+.splash.note-high {
+  margin-left: -8px;
+  margin-top: -6px;
   height: 74px;
 }
 
@@ -257,6 +275,12 @@ button.primary {
 .ledgerLine {
   height: 1px;
   width: 20px;
+  position: absolute;
+}
+
+.ledgerLineWide {
+  height: 1px;
+  width: 27px;
   position: absolute;
 }
 
@@ -279,7 +303,7 @@ button.primary {
 #notePicker {
   background-image: url(notes.png);
   border: 1px solid #ccc;
-  height: 109px;
+  height: 124px;
   width: 46px;
 }
 
@@ -297,6 +321,13 @@ button.primary {
 #sampleHelp6, #sampleHelp7 {
   height: 50px;
   width: 250px;
+}
+
+#spinner {
+  height: 40px;
+  width: 40px;
+  margin-top: 8px;
+  opacity: .6;
 }
 
 /* Slider. */

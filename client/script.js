@@ -1,8 +1,6 @@
 /**
- * Blockly Games: Music
- *
- * Copyright 2016 Google Inc.
- * https://github.com/google/blockly-games
+ * @license
+ * Copyright 2016 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -286,6 +284,7 @@ Music.changeTab = function(index) {
   // Synchronize the JS editor.
   if (index == JAVASCRIPT && Music.blocksEnabled_) {
     var code = Music.blocksToCode();
+    code = code.replace(/, 'block_id_([^']+)'/g, '')
     Music.ignoreEditorChanges_ = true;
     Music.editor['setValue'](code, -1);
     Music.ignoreEditorChanges_ = false;
@@ -428,11 +427,17 @@ Music.drawStave = function(n) {
   var staveBox = document.getElementById('staveBox');
   // <img src="stave.png" class="stave" style="top: 100px">
   for (var i = 1; i <= n; i++) {
-    var top = Music.staveTop_(i, n);
+    var top = Math.round(Music.staveTop_(i, n));
     var img = document.createElement('img');
     img.src = 'stave.png';
     img.className = 'stave';
-    img.style.top = Math.round(top) + 'px';
+    img.style.top = top + 'px';
+    staveBox.appendChild(img);
+    var img = document.createElement('img');
+    img.className = 'stave-15';
+    img.src = '15.png';
+    img.style.top = (top - 12) + 'px';
+    img.style.left = '10px';
     staveBox.appendChild(img);
   }
 };
@@ -457,7 +462,7 @@ Music.staveTop_ = function(i, n) {
  * Draw and position the specified note or rest.
  * @param {number} i Which stave bar to draw on (base 1).
  * @param {number} time Distance down the stave (on the scale of whole notes).
- * @param {string} pitch MIDI value of note (0-12), or rest (Music.REST).
+ * @param {number} pitch MIDI value of note (81-105), or rest (Music.REST).
  * @param {number} duration Duration of note or rest (1, 0.5, 0.25...).
  */
 Music.drawNote = function(i, time, pitch, duration) {
@@ -467,48 +472,113 @@ Music.drawNote = function(i, time, pitch, duration) {
     duration -= 1;
   }
   var top = Music.staveTop_(i, Music.staveCount);
+  var ledgerTop = top;
   if (pitch == Music.REST) {
     top += 21;
     top = Math.round(top);
   } else {
-    top += pitch * -4.5 + 32;
+    top += Music.drawNote.heights_[pitch];
     top = Math.floor(top);  // I have no idea why floor is better than round.
   }
 
   var LEFT_PADDING = 10;
   var WHOLE_WIDTH = 256;
   var left = Math.round(time * WHOLE_WIDTH + LEFT_PADDING);
+  var ledgerLeft = left - 5;
   var musicContainer = document.getElementById('musicContainer');
   var img = document.createElement('img');
-  var name = (pitch == Music.REST ? 'rest' : 'note');
-  img.src = name + 's/' + duration + '.png';
-  img.className = name;
+  var flip = '';
+  if (pitch != Music.REST) {
+    flip = (duration == 1 || pitch < 94) ? '-low' : '-high';
+  }
+  img.src = (pitch == Music.REST ? 'rests/' : 'notes/') + duration + flip + '.png';
+  if (pitch == Music.REST) {
+    img.className = 'rest';
+  } else {
+    img.className = 'note' + flip;
+    img.title = Music.fromMidi[pitch];
+    if (flip == '-high') {
+      top += 28;
+      left -= 6;
+    }
+  }
   img.style.top = top + 'px';
   img.style.left = left + 'px';
-  if (pitch != Music.REST) {
-    img.title = Music.fromMidi[pitch];
-  }
   musicContainer.appendChild(img);
-  // Add a splash effect when playing a note.
-  var splash = document.createElement('img');
-  splash.src = name + 's/' + duration + '.png';
-  splash.className = name;
-  splash.style.top = top + 'px';
-  splash.style.left = left + 'px';
+  var flat;
+  if (pitch != Music.REST && Music.fromMidi[pitch].indexOf('b') != -1) {
+    var flat = document.createElement('img');
+    flat.src = 'notes/flat.png';
+    flat.className = 'flat';
+    flat.title = img.title;
+    if (flip == '-low') {
+      top += 18;
+      left -= 10;
+    } else {
+      top -= 10;
+      left -= 4;
+    }
+    flat.style.top = top + 'px';
+    flat.style.left = left + 'px';
+    musicContainer.appendChild(flat);
+  }
+
+  // Add a splash effect when playing a note or rest.
+  var splash = img.cloneNode();
   musicContainer.appendChild(splash);
   // Wait 0 ms to trigger the CSS Transition.
-  setTimeout(function() {splash.className = 'splash ' + name;}, 0);
+  setTimeout(function() {splash.className = 'splash ' + img.className;}, 0);
   // Garbage collect the now-invisible note.
   setTimeout(function() {Blockly.utils.dom.removeNode(splash);}, 1000);
-  if (pitch == '0' || pitch == '12') {
-    var line = document.createElement('img');
-    line.src = 'black1x1.gif';
-    line.className = 'ledgerLine';
-    line.style.top = (top + 32) + 'px';
-    line.style.left = (left - 5) + 'px';
-    musicContainer.appendChild(line);
+
+  if (pitch != Music.REST) {
+    if (pitch >= 104) {
+      // First ledger line above stave.
+      Music.makeLedgerLine_(ledgerTop + 9, ledgerLeft, duration, musicContainer);
+    }
+    if (pitch <= 84) {
+      // First ledger line below stave.
+      Music.makeLedgerLine_(ledgerTop + 63, ledgerLeft, duration, musicContainer);
+    }
+    if (pitch <= 81) {
+      // Second ledger line below stave.
+      Music.makeLedgerLine_(ledgerTop + 63 + 9, ledgerLeft, duration, musicContainer);
+    }
   }
 };
+
+/**
+ * Create a ledger line above or below the stave.
+ * @param {number} top Top coordinate of line.
+ * @param {number} left Left coordinate of line.
+ * @param {number} duration Length of note (whole notes need longer lines).
+ * @param {!Element} container Parent element to append line to.
+ * @private
+ */
+Music.makeLedgerLine_ = function(top, left, duration, container) {
+  var line = document.createElement('img');
+  line.src = 'black1x1.gif';
+  line.className = duration == 1 ? 'ledgerLineWide' : 'ledgerLine';
+  line.style.top = top + 'px';
+  line.style.left = left + 'px';
+  container.appendChild(line);
+};
+
+/**
+ * Lookup table for height of each note.
+ * @private
+ */
+Music.drawNote.heights_ = {};
+(function() {
+  var height = 40.5;
+  for (var midi in Music.fromMidi) {
+    var note = Music.fromMidi[midi];
+    Music.drawNote.heights_[midi] = height;
+    if (note.indexOf('b') == -1) {
+      height -= 4.5;
+    }
+  }
+})();
 
 /**
  * Show the help pop-up.
@@ -857,10 +927,16 @@ Music.animate = function(id) {
 /**
  * Play one note.
  * @param {number} duration Fraction of a whole note length to play.
- * @param {number} pitch MIDI note number to play.
+ * @param {number} pitch MIDI note number to play (81-105).
  * @param {?string} id ID of block.
  */
 Music.play = function(duration, pitch, id) {
+  pitch = Math.round(pitch);
+  if (!Music.fromMidi[pitch]) {
+    console.warn('MIDI note out of range (81-105): ' + pitch);
+    Music.rest(duration, id);
+    return;
+  }
   if (Music.activeThread.resting) {
     // Reorder this thread to the top of the resting threads.
     // Find the min resting thread stave.
@@ -888,7 +964,7 @@ Music.play = function(duration, pitch, id) {
   Music.activeThread.transcript.push(pitch);
   Music.activeThread.transcript.push(duration);
   Music.drawNote(Music.activeThread.stave, Music.clock64ths / 64,
-                 String(pitch), duration);
+                 pitch, duration);
   Music.animate(id);
 };
 
@@ -912,7 +988,7 @@ Music.rest = function(duration, id) {
     Music.activeThread.transcript.push(duration);
   }
   Music.drawNote(Music.activeThread.stave, Music.clock64ths / 64,
-                 String(Music.REST), duration);
+                 Music.REST, duration);
   Music.animate(id);
 };
 
@@ -958,7 +1034,7 @@ Music.eventSpam.previousDate_ = 0;
  * highlight/unhighlight the specified block.
  */
 Music.highlight = function(id, opt_state) {
-  if (id) {
+  if (id && typeof id == 'string') {
     var m = id.match(/^block_id_([^']+)$/);
     if (m) {
       id = m[1];

@@ -1,8 +1,6 @@
 /**
- * Visual Blocks Editor
- *
- * Copyright 2016 Google Inc.
- * https://github.com/google/blockly-games
+ * @license
+ * Copyright 2016 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,15 +28,17 @@
  * @extends {Blockly.FieldTextInput}
  * @constructor
  */
-Music.FieldPitch = function(text) {
-  Music.FieldPitch.superClass_.constructor.call(this, text);
+var FieldPitch = function(text) {
+  FieldPitch.superClass_.constructor.call(this, text);
 };
-Blockly.utils.object.inherits(Music.FieldPitch, Blockly.FieldTextInput);
+Blockly.utils.object.inherits(FieldPitch, Blockly.FieldTextInput);
 
 /**
- * Table between human-readable text (C6-A7) and machine-readable midi (84-105).
+ * Table between human-readable text (A5-A7) and machine-readable midi (81-105).
  */
-Music.FieldPitch.NOTES = [
+FieldPitch.NOTES = [
+  ['A5', 81],
+  ['B5', 83],
   ['C6', 84],
   ['D6', 86],
   ['E6', 88],
@@ -58,8 +58,8 @@ Music.FieldPitch.NOTES = [
  * Show the inline free-text editor on top of the text and the note picker.
  * @private
  */
-Music.FieldPitch.prototype.showEditor_ = function() {
-  Music.FieldPitch.superClass_.showEditor_.call(this);
+FieldPitch.prototype.showEditor_ = function() {
+  FieldPitch.superClass_.showEditor_.call(this);
 
   var div = Blockly.WidgetDiv.DIV;
   if (!div.firstChild) {
@@ -94,7 +94,7 @@ Music.FieldPitch.prototype.showEditor_ = function() {
  * @return {!Element} The newly created pitch picker.
  * @private
  */
-Music.FieldPitch.prototype.dropdownCreate_ = function() {
+FieldPitch.prototype.dropdownCreate_ = function() {
   this.imageElement_ = document.createElement('div');
   this.imageElement_.id = 'notePicker';
 
@@ -105,7 +105,7 @@ Music.FieldPitch.prototype.dropdownCreate_ = function() {
  * Dispose of events belonging to the pitch editor.
  * @private
  */
-Music.FieldPitch.prototype.dropdownDispose_ = function() {
+FieldPitch.prototype.dropdownDispose_ = function() {
   Blockly.unbindEvent_(this.clickWrapper_);
   Blockly.unbindEvent_(this.moveWrapper_);
 };
@@ -114,7 +114,7 @@ Music.FieldPitch.prototype.dropdownDispose_ = function() {
  * Hide the editor.
  * @private
  */
-Music.FieldPitch.prototype.hide_ = function() {
+FieldPitch.prototype.hide_ = function() {
   Blockly.WidgetDiv.hide();
   Blockly.DropDownDiv.hideWithoutAnimation();
 };
@@ -123,21 +123,21 @@ Music.FieldPitch.prototype.hide_ = function() {
  * Set the note to match the mouse's position.
  * @param {!Event} e Mouse move event.
  */
-Music.FieldPitch.prototype.onMouseMove = function(e) {
+FieldPitch.prototype.onMouseMove = function(e) {
   var bBox = this.imageElement_.getBoundingClientRect();
-  var dy = e.clientY - bBox.top;
-  var note = Blockly.utils.math.clamp(Math.round(13.5 - dy / 7.5), 0, 12);
+  var dy = e.clientY - bBox.top - 13.5;
+  var note = Blockly.utils.math.clamp(Math.round(13.5 - dy / 7.5), 0, 14);
   this.imageElement_.style.backgroundPosition = (-note * 37) + 'px 0';
-  this.setEditorValue_(Music.FieldPitch.NOTES[note][1]);
+  this.setEditorValue_(FieldPitch.NOTES[note][1]);
 };
 
 /**
- * Convert the machine-readable value (84-105) to human-readable text (C6-A7).
+ * Convert the machine-readable value (81-105) to human-readable text (A5-A7).
  * @param {number|string} value The provided value.
  * @return {string|undefined} The respective note, or undefined if invalid.
  */
-Music.FieldPitch.prototype.valueToNote = function(value) {
-  var notes = Music.FieldPitch.NOTES;
+FieldPitch.prototype.valueToNote = function(value) {
+  var notes = FieldPitch.NOTES;
   for (var i = 0; i < notes.length; i++) {
     if (notes[i][1] == value) {
       return notes[i][0];
@@ -147,13 +147,13 @@ Music.FieldPitch.prototype.valueToNote = function(value) {
 };
 
 /**
- * Convert the human-readable text (C6-A7) to machine-readable value (84-105).
+ * Convert the human-readable text (A5-A7) to machine-readable value (81-105).
  * @param {string} text The provided note.
  * @return {number|undefined} The respective value, or undefined if invalid.
  */
-Music.FieldPitch.prototype.noteToValue = function(text) {
+FieldPitch.prototype.noteToValue = function(text) {
   var normalizedText = text.trim().toUpperCase();
-  var notes = Music.FieldPitch.NOTES;
+  var notes = FieldPitch.NOTES;
   for (var i = 0; i < notes.length; i++) {
     if (notes[i][0] == normalizedText) {
       return notes[i][1];
@@ -168,9 +168,9 @@ Music.FieldPitch.prototype.noteToValue = function(text) {
  *   the super class will handle it, likely a string cast of value.
  * @protected
  */
-Music.FieldPitch.prototype.getText_ = function() {
+FieldPitch.prototype.getText_ = function() {
   if (this.isBeingEdited_) {
-    return Music.FieldPitch.superClass_.getText_.call(this);
+    return FieldPitch.superClass_.getText_.call(this);
   }
   return this.valueToNote(this.getValue()) || null;
 };
@@ -180,7 +180,7 @@ Music.FieldPitch.prototype.getText_ = function() {
  * @param {*} value The value stored in this field.
  * @returns {string} The text to show on the HTML input.
  */
-Music.FieldPitch.prototype.getEditorText_ = function(value) {
+FieldPitch.prototype.getEditorText_ = function(value) {
   return this.valueToNote(value);
 };
 
@@ -190,7 +190,7 @@ Music.FieldPitch.prototype.getEditorText_ = function(value) {
  * @param {string} text Text received from the HTML input.
  * @returns {*} The value to store.
  */
-Music.FieldPitch.prototype.getValueFromEditorText_ = function(text) {
+FieldPitch.prototype.getValueFromEditorText_ = function(text) {
   return this.noteToValue(text);
 };
 
@@ -199,8 +199,8 @@ Music.FieldPitch.prototype.getValueFromEditorText_ = function(text) {
  * @private
  * @override
  */
-Music.FieldPitch.prototype.render_ = function() {
-  Music.FieldPitch.superClass_.render_.call(this);
+FieldPitch.prototype.render_ = function() {
+  FieldPitch.superClass_.render_.call(this);
   this.updateGraph_();
 };
 
@@ -208,12 +208,12 @@ Music.FieldPitch.prototype.render_ = function() {
  * Redraw the note picker with the current note.
  * @private
  */
-Music.FieldPitch.prototype.updateGraph_ = function() {
+FieldPitch.prototype.updateGraph_ = function() {
   if (!this.imageElement_) {
     return;
   }
   var value = this.getValue();
-  var notes = Music.FieldPitch.NOTES;
+  var notes = FieldPitch.NOTES;
   for (var i = 0; i < notes.length; i++) {
     if (notes[i][1] == value) {
       break;
@@ -227,7 +227,7 @@ Music.FieldPitch.prototype.updateGraph_ = function() {
  * @param {*} opt_newValue The input value.
  * @return {*} A valid value, or null if invalid.
  */
-Music.FieldPitch.prototype.doClassValidation_ = function(opt_newValue) {
+FieldPitch.prototype.doClassValidation_ = function(opt_newValue) {
   if (opt_newValue === null || opt_newValue === undefined) {
     return null;
   }
@@ -237,5 +237,3 @@ Music.FieldPitch.prototype.doClassValidation_ = function(opt_newValue) {
   }
   return null;
 };
-
-Blockly.fieldRegistry.register('field_pitch', Music.FieldPitch);
