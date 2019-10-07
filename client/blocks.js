@@ -28,15 +28,15 @@ Blockly.Blocks['music_pitch'] = {
    */
   init: function() {
     this.appendDummyInput()
-        .appendField(new FieldPitch('7'), 'PITCH');
+        .appendField(new FieldPitch('C7'), 'PITCH');
     this.setOutput(true, 'Number');
     this.setColour(Blockly.Msg['MATH_HUE']);
-    this.setTooltip('One note (C4 is 7).');
+    this.setTooltip('One note (C7 is 96).');
   }
 };
 
 Blockly.JavaScript['music_pitch'] = function(block) {
-  return [Number(block.getFieldValue('PITCH')),
+  return [block.getFieldValue('PITCH'),
       Blockly.JavaScript.ORDER_ATOMIC];
 };
 
@@ -83,7 +83,7 @@ Blockly.Blocks['music_note'] = {
 
 Blockly.JavaScript['music_note'] = function(block) {
   var pitch = Blockly.JavaScript.valueToCode(block, 'PITCH',
-      Blockly.JavaScript.ORDER_COMMA) || '7';
+      Blockly.JavaScript.ORDER_COMMA) || 'C7';
   return 'play(' + Number(block.getFieldValue('DURATION')) + ', ' + pitch +
       ', \'block_id_' + block.id + '\');\n';
 };

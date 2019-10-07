@@ -33,7 +33,7 @@ Music.WIDTH = 400;
 Music.pid = 0;
 
 /**
- * Number of start blocks on the page (and thus the number of threads).
+ * Number of start blocks on the page (only used for blocks mode).
  */
 Music.startCount = 0;
 
@@ -108,7 +108,19 @@ Music.blocksEnabled_ = true;
 Music.ignoreEditorChanges_ = true;
 
 /**
- * Look-up from machine-readable value (48-69) to human-readable text (C3-A4).
+ * Array of staves.  Each stave is an array of [pitch, duration] tuples.
+ * @type {!Array.<!Array.<!Array.<number>>>}
+ */
+Music.transcript = [];
+
+/**
+ * Number of created Threads.  Always incrementing during execution,
+ * does not decrement when a thread finishes.
+ */
+Music.threadCount = 0;
+
+/**
+ * Look-up from machine-readable value (81-105) to human-readable text (A5-A7).
  */
 Music.fromMidi = {
   81: 'A5',
@@ -208,6 +220,7 @@ Music.init = function() {
   session['setMode']('ace/mode/javascript');
   session['setTabSize'](2);
   session['setUseSoftTabs'](true);
+  session['setUseWrapMode'](true);
   session['on']('change', Music.editorChanged);
   Music.editor['setValue'](defaultCode, -1);
 
@@ -299,8 +312,13 @@ Music.blocksToCode = function() {
   // For safety, recompute startCount in the generator.
   Music.startCount = 0;
   var code = Blockly.JavaScript.workspaceToCode(Music.workspace);
-  // Add 'runThread' functions to the start.
   var header = '';
+  var constants = [];
+  for (var midi in Music.fromMidi) {
+    constants.push(Music.fromMidi[midi] + '=' + midi);
+  }
+  // Add 'runThread' functions to the start.
+  header += 'var ' + constants.join(', ') + ';\n';
   for (var i = 1; i <= Music.startCount; i++) {
     header += 'runThread(start' + i + ');\n';
   }
@@ -318,9 +336,10 @@ Music.editorChanged = function() {
   if (Music.blocksEnabled_) {
     if (!Music.workspace.getTopBlocks(false).length ||
         confirm('Once you start editing JavaScript, you can\'t go back to editing blocks. Is this OK?')) {
-      // Break link betweeen blocks and JS.
+      // Break link between blocks and JS.
       Blockly.utils.dom.addClass(Music.editorTabs[0], 'tab-disabled');
       Music.blocksEnabled_ = false;
+      Music.startCount = 0;
     } else {
       // Abort change, preserve link.
       var code = Music.blocksToCode();
@@ -415,7 +434,19 @@ Music.drawStaveBox = function() {
   img.src = '1x1.gif';
   musicContainer.appendChild(img);
 
-  Music.drawStave(Music.startCount || 1);
+  // Draw empty staves.
+  var count = Music.transcript.length > 1 ? Music.transcript.length - 1 :
+      Music.startCount;
+  Music.drawStave(Blockly.utils.math.clamp(count, 1, 4));
+
+  // Repopulate the music from the transcripts.
+  for (var i = 1; i < Math.min(5, Music.transcript.length); i++) {
+    var clock64 = 0;
+    for (var j = 0, tuple; (tuple = Music.transcript[i][j]); j++) {
+      Music.drawNote(i, clock64, tuple[0], tuple[1]);
+      clock64 += tuple[1] * 64;
+    }
+  }
 };
 
 /**
@@ -460,18 +491,32 @@ Music.staveTop_ = function(i, n) {
 
 /**
  * Draw and position the specified note or rest.
- * @param {number} i Which stave bar to draw on (base 1).
- * @param {number} time Distance down the stave (on the scale of whole notes).
+ * @param {number} stave Which stave bar to draw on (base 1).
+ * @param {number} clock64 Distance down the stave (on the scale of 1/64 notes).
  * @param {number} pitch MIDI value of note (81-105), or rest (Music.REST).
  * @param {number} duration Duration of note or rest (1, 0.5, 0.25...).
  */
-Music.drawNote = function(i, time, pitch, duration) {
-  while (duration > 1) {
-    Music.drawNote(i, time, pitch, 1);
-    time += 1;
-    duration -= 1;
+Music.drawNote = function(stave, clock64, pitch, duration) {
+  // Split notes/rests with odd durations into legal quanta.
+  var legalDurations = [1, 0.5, 0.25, 0.125, 0.0625, 0.03125];
+  for (var i = 0; i < legalDurations.length; i++) {
+    var legalDuration = legalDurations[i];
+    if (duration == legalDuration) {
+      break;  // Valid note.
+    }
+    while (duration > legalDuration) {
+      Music.drawNote(stave, clock64, pitch, legalDuration);
+      pitch = Music.REST;  // Subsequent duration is a pause.
+      clock64 += legalDuration * 64;
+      duration -= legalDuration;
+    }
   }
-  var top = Music.staveTop_(i, Music.staveCount);
+  if (duration < legalDurations[legalDurations.length - 1]) {
+    return;  // Too small to display.
+  }
+
+  var time = clock64 / 64;
+  var top = Music.staveTop_(stave, Music.staveCount);
   var ledgerTop = top;
   if (pitch == Music.REST) {
     top += 21;
@@ -523,13 +568,15 @@ Music.drawNote = function(i, time, pitch, duration) {
     musicContainer.appendChild(flat);
   }
 
-  // Add a splash effect when playing a note or rest.
-  var splash = img.cloneNode();
-  musicContainer.appendChild(splash);
-  // Wait 0 ms to trigger the CSS Transition.
-  setTimeout(function() {splash.className = 'splash ' + img.className;}, 0);
-  // Garbage collect the now-invisible note.
-  setTimeout(function() {Blockly.utils.dom.removeNode(splash);}, 1000);
+  if (Music.clock64ths == clock64) {
+    // Add a splash effect when playing a note or rest.
+    var splash = img.cloneNode();
+    musicContainer.appendChild(splash);
+    // Wait 0 ms to trigger the CSS Transition.
+    setTimeout(function() {splash.className = 'splash ' + img.className;}, 0);
+    // Garbage collect the now-invisible note.
+    setTimeout(function() {Blockly.utils.dom.removeNode(splash);}, 1000);
+  }
 
   if (pitch != Music.REST) {
     if (pitch >= 104) {
@@ -684,9 +731,11 @@ Music.reset = function() {
   Music.interpreter = null;
   Music.activeThread = null;
   Music.threads.length = 0;
+  Music.threadCount = 0;
   Music.clock64ths = 0;
   Music.startTime = 0;
   Music.canSubmit = false;
+  Music.transcript.length = 0;
 
   Music.drawStaveBox();
 };
@@ -742,10 +791,45 @@ Music.initInterpreter = function(interpreter, scope) {
   };
   interpreter.setProperty(scope, 'play',
       interpreter.createNativeFunction(wrapper));
+
   wrapper = function(duration, id) {
     Music.rest(duration, id);
   };
   interpreter.setProperty(scope, 'rest',
+      interpreter.createNativeFunction(wrapper));
+
+  wrapper = function(func) {
+    if (Music.threads.length > 16) throw 'Too many threads.';
+    // Create a new state stack that will run the provided function.
+    // Program state (empty).
+    var stateStack = [];
+    var node = new interpreter.nodeConstructor({options:{}});
+    node['type'] = 'Program';
+    node['body'] = [];
+    var state = new Interpreter.State(node, interpreter.global);
+    state.done = false;
+    stateStack.push(state);
+    // ExpressionStatement node.
+    var node = new interpreter.nodeConstructor({options:{}});
+    node['type'] = 'ExpressionStatement';
+    var state = new Interpreter.State(node, interpreter.global);
+    state.done_ = true;
+    stateStack.push(state);
+    // CallExpression node (fully populated, ready to call).
+    var node = new interpreter.nodeConstructor({options:{}});
+    node['type'] = 'CallExpression';
+    var state = new Interpreter.State(node, interpreter.global);
+    state.doneCallee_ = true;
+    state.funcThis_ = interpreter.global;
+    state.func_ = func;
+    state.doneArgs_ = true;
+    state.arguments_ = [];
+    stateStack.push(state);
+    // Add this state stack as a new thread.
+    var thread = new Music.Thread(stateStack);
+    Music.threads.push(thread);
+  };
+  interpreter.setProperty(scope, 'runThread',
       interpreter.createNativeFunction(wrapper));
 };
 
@@ -777,18 +861,9 @@ Music.execute = function() {
     code = Music.editor['getValue']();
   }
   console.log(code);
-  if (Music.startCount == 0) {  // Blank workspace.
-    Music.resetButtonClick();
-  }
 
   Music.interpreter = new Interpreter(code, Music.initInterpreter);
-  for (var i = 1; i <= Music.startCount; i++) {
-    var interpreter = new Interpreter('');
-    // Replace this thread's global scope with the cross-thread global.
-    interpreter.stateStack[0].scope = Music.interpreter.global;
-    interpreter.appendCode('start' + i + '();\n');
-    Music.threads.push(new Music.Thread(i, interpreter.stateStack));
-  }
+  Music.threads.push(new Music.Thread(Music.interpreter.stateStack));
   setTimeout(Music.tick, 100);
 };
 
@@ -802,27 +877,34 @@ Music.tick = function() {
     // Either the first tick, or first tick after slider was adjusted.
     Music.startTime = Date.now() - Music.clock64ths * scaleDuration;
   }
-  var done = true;
-  for (var i = 0, thread; (thread = Music.threads[i]); i++) {
-    if (!thread.done) {
-      done = false;
-      if (thread.pauseUntil64ths <= Music.clock64ths) {
-        Music.executeChunk_(thread);
-      }
-    }
-  }
 
-  if (done) {
+  if (Music.threads.length) {
+    var ticks = 32;
+    do {
+      if (ticks-- == 0) {
+        console.warn('Thread creation out of control.');
+        break;
+      }
+      var oldCount = Music.threadCount;
+      // Take a copy of the threads since executing a thread could add more
+      // threads or splice itself out of the list.
+      var threadCopy = Music.threads.concat();
+      for (var i = 0, thread; (thread = threadCopy[i]); i++) {
+        if (thread.pauseUntil64ths <= Music.clock64ths) {
+          Music.executeChunk_(thread);
+        }
+      }
+    } while (oldCount != Music.threadCount);
+    Music.autoScroll();
+    Music.clock64ths++;
+    var ms = (Music.startTime + Music.clock64ths * scaleDuration) - Date.now();
+    Music.pid = setTimeout(Music.tick, ms);
+  } else {
     // Program completed
     document.getElementById('spinner').style.visibility = 'hidden';
     Music.workspace.highlightBlock(null);
     // Playback complete; allow the user to submit this music to gallery.
     Music.canSubmit = true;
-  } else {
-    Music.autoScroll();
-    Music.clock64ths++;
-    var ms = (Music.startTime + Music.clock64ths * scaleDuration) - Date.now();
-    Music.pid = setTimeout(Music.tick, ms);
   }
 };
 
@@ -836,6 +918,7 @@ Music.executeChunk_ = function(thread) {
   Music.interpreter.stateStack = thread.stateStack;
   // Switch the interpreter to run the provided thread.
   Music.interpreter.stateStack = thread.stateStack;
+  var ticks = 10000;
   var go;
   do {
     try {
@@ -845,18 +928,16 @@ Music.executeChunk_ = function(thread) {
       alert(e);
       go = false;
     }
+    if (ticks-- == 0) {
+      console.warn('Thread ' + thread.stave + ' is running slowly.');
+      return;
+    }
     if (thread.pauseUntil64ths > Music.clock64ths) {
-      // The last executed command requested a pause.
+      // Previously executed command (play or rest) requested a pause.
       return;
     }
   } while (go);
-  // Thread complete.  Wrap up.
-  Music.stopSound(thread);
-  if (thread.highlighedBlock) {
-    Music.highlight(thread.highlighedBlock, false);
-    thread.highlighedBlock = null;
-  }
-  thread.done = true;
+  thread.dispose();
 };
 
 /**
@@ -912,7 +993,7 @@ Music.autoScroll = function() {
 
 /**
  * Highlight a block and pause.
- * @param {?string} id ID of block.
+ * @param {string|undefined} id ID of block.
  */
 Music.animate = function(id) {
   if (id) {
@@ -928,68 +1009,38 @@ Music.animate = function(id) {
  * Play one note.
  * @param {number} duration Fraction of a whole note length to play.
  * @param {number} pitch MIDI note number to play (81-105).
- * @param {?string} id ID of block.
+ * @param {string} opt_id ID of block.
  */
-Music.play = function(duration, pitch, id) {
+Music.play = function(duration, pitch, opt_id) {
   pitch = Math.round(pitch);
   if (!Music.fromMidi[pitch]) {
     console.warn('MIDI note out of range (81-105): ' + pitch);
     Music.rest(duration, id);
     return;
   }
-  if (Music.activeThread.resting) {
-    // Reorder this thread to the top of the resting threads.
-    // Find the min resting thread stave.
-    var minResting = Infinity;
-    for (var i = 0, thread; (thread = Music.threads[i]); i++) {
-      if (thread.resting && thread.stave < minResting) {
-        minResting = thread.stave;
-      }
-    }
-    // Swap this thread and the min-thread's staves.
-    for (var i = 0, thread; (thread = Music.threads[i]); i++) {
-      if (minResting == thread.stave) {
-        var swapStave = Music.activeThread.stave;
-        Music.activeThread.stave = minResting;
-        thread.stave = swapStave;
-        break;
-      }
-    }
-    Music.activeThread.resting = false;
-  }
   Music.stopSound(Music.activeThread);
   Music.activeThread.sound = createjs.Sound.play(pitch);
   Music.activeThread.pauseUntil64ths = duration * 64 + Music.clock64ths;
   // Make a record of this note.
-  Music.activeThread.transcript.push(pitch);
-  Music.activeThread.transcript.push(duration);
-  Music.drawNote(Music.activeThread.stave, Music.clock64ths / 64,
+  Music.activeThread.appendTranscript(pitch, duration);
+  Music.drawNote(Music.activeThread.stave, Music.clock64ths,
                  pitch, duration);
-  Music.animate(id);
+  Music.animate(opt_id);
 };
 
 /**
  * Wait one rest.
  * @param {number} duration Fraction of a whole note length to rest.
- * @param {?string} id ID of block.
+ * @param {string=} opt_id ID of block.
  */
-Music.rest = function(duration, id) {
+Music.rest = function(duration, opt_id) {
   Music.stopSound(Music.activeThread);
   Music.activeThread.pauseUntil64ths = duration * 64 + Music.clock64ths;
   // Make a record of this rest.
-  if (Music.activeThread.transcript.length > 1 &&
-      Music.activeThread.transcript
-          [Music.activeThread.transcript.length - 2] == Music.REST) {
-    // Concatenate this rest with previous one.
-    Music.activeThread.transcript
-        [Music.activeThread.transcript.length - 1] += duration;
-  } else {
-    Music.activeThread.transcript.push(Music.REST);
-    Music.activeThread.transcript.push(duration);
-  }
-  Music.drawNote(Music.activeThread.stave, Music.clock64ths / 64,
+  Music.activeThread.appendTranscript(Music.REST, duration);
+  Music.drawNote(Music.activeThread.stave, Music.clock64ths,
                  Music.REST, duration);
-  Music.animate(id);
+  Music.animate(opt_id);
 };
 
 /**
@@ -1045,20 +1096,70 @@ Music.highlight = function(id, opt_state) {
 
 /**
  * One execution thread.
- * @param {number} i Number of this thread (1-4).
  * @param {!Array.<!Interpreter.State>} stateStack JS Interpreter state stack.
  * @constructor
  */
-Music.Thread = function(i, stateStack) {
-  this.stave = i;  // 1-4
+Music.Thread = function(stateStack) {
+  this.id = Music.threadCount++;
+  console.info('Thread ' + this.id + ' created.');
+  // Stave set to undefined means this thread has not played anything yet.
+  // Stave set to 1-4 means this thread is visualized.
+  // Stave set above 4 will play but not be visualized.
+  this.stave = undefined;
   this.stateStack = stateStack;
-  this.transcript = [];
   this.pauseUntil64ths = 0;
   this.highlighedBlock = null;
   // Currently playing sound object.
   this.sound = null;
-  // Has not played a note yet.  Level 1-9 the threads need to reorder
-  // as the first note is played.  Level 10 is by start block height.
-  this.resting = false;
-  this.done = false;
+};
+
+Music.Thread.prototype.appendTranscript = function(pitch, duration) {
+  if (this.stave === undefined) {
+    // Find all stave numbers currently in use.
+    var staves = [];
+    for (var i = 0, thread; (thread = Music.threads[i]); i++) {
+      if (thread.stave !== undefined) {
+        staves[thread.stave] = true;
+      }
+    }
+    // Search for the next available stave.
+    var i = 1;
+    while (staves[i]) {
+      i++;
+    }
+    this.stave = i;
+    // Create a new transcript stave if this stave is not recycled.
+    if (!Music.transcript[i]) {
+      Music.transcript[i] = [];
+    }
+    // Compute length of existing content in this transcript stave.
+    var existingDuration = 0;
+    var transcript = Music.transcript[i];
+    for (var i = 0; i < transcript.length; i++) {
+      existingDuration += transcript[i][1];
+    }
+    // Add pause to line up this transcript stave with the clock.
+    var deltaDuration = Music.clock64ths / 64 - existingDuration;
+    deltaDuration = Math.round(deltaDuration * 1000000) / 1000000;
+    if (deltaDuration > 0) {
+      transcript.push([Music.REST, deltaDuration]);
+    }
+    // Redraw the visualization with the new number of staves.
+    Music.drawStaveBox();
+  }
+  Music.transcript[this.stave].push([pitch, duration]);
+};
+
+
+/**
+ * Thread complete.  Wrap up.
+ */
+Music.Thread.prototype.dispose = function() {
+  Music.stopSound(this);
+  if (this.highlighedBlock) {
+    Music.highlight(this.highlighedBlock, false);
+    this.highlighedBlock = null;
+  }
+  console.info('Thread ' + this.id + ' completed.');
+  Blockly.utils.arrayRemove(Music.threads, this);
 };
