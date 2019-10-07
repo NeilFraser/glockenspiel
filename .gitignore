@@ -2,3 +2,4 @@
 *.komodoproject
 .DS_Store
 *.gcode
+*~.skp
