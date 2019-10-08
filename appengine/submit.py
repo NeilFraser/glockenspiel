@@ -14,19 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-"""Store the latest tune in Memcache using App Engine.
+"""Store the latest tune in Datastore using App Engine.
 """
 
 __author__ = "fraser@google.com (Neil Fraser)"
 
 import cgi
-from google.appengine.api import memcache
+from google.appengine.ext import ndb
+
+class Tune(ndb.Model):
+  data = ndb.TextProperty()
 
 print("Content-Type: text/plain\n")
 
 forms = cgi.FieldStorage()
 data = forms["data"].value
 
-memcache.add("PLAY", data, 3600)
+row = Tune(id = "PLAY", data = data)
+row.put()
 
 print("Your tune has been sent to the glockenspiel and will play shortly.")

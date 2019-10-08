@@ -14,12 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-"""Store the latest tune in Memcache using App Engine.
+"""Fetch the latest tune from Datastore using App Engine.
 """
 
 __author__ = "fraser@google.com (Neil Fraser)"
 
-from google.appengine.api import memcache
+from google.appengine.ext import ndb
+
+class Tune(ndb.Model):
+  data = ndb.TextProperty()
 
 print("Content-Type: text/plain\n")
-print(memcache.get("PLAY"))
+
+result = Tune.get_by_id("PLAY")
+if result:
+  print(result.data)
+  result.key.delete()

@@ -9,7 +9,7 @@ Modifications:
 
 * blockly
 Source: https://github.com/google/blockly/tree/develop
-Date: 15 September 2019
+Date: 7 October 2019
 Modifications: None.
 
 * blockly-games
