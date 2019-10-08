@@ -78,12 +78,6 @@ Music.clock64ths = 0;
 Music.activeThread = null;
 
 /**
- * Is the composition ready to be submitted to gallery?
- * @type boolean
- */
-Music.canSubmit = false;
-
-/**
  * Constant denoting a rest.
  */
 Music.REST = -1;
@@ -263,6 +257,7 @@ Music.init = function() {
 
   Music.bindClick('runButton', Music.runButtonClick);
   Music.bindClick('resetButton', Music.resetButtonClick);
+  Music.bindClick('submitButton', Music.submitButtonClick);
 
   // Lazy-load the JavaScript interpreter.
   setTimeout(Music.importInterpreter, 1);
@@ -734,7 +729,6 @@ Music.reset = function() {
   Music.threadCount = 0;
   Music.clock64ths = 0;
   Music.startTime = 0;
-  Music.canSubmit = false;
   Music.transcript.length = 0;
 
   Music.drawStaveBox();
@@ -774,6 +768,8 @@ Music.resetButtonClick = function(opt_e) {
   runButton.style.display = 'inline';
   document.getElementById('resetButton').style.display = 'none';
   document.getElementById('spinner').style.visibility = 'hidden';
+  document.getElementById('submitButton').setAttribute('disabled', '');
+
   Music.workspace.highlightBlock(null);
   Music.reset();
 };
@@ -860,7 +856,6 @@ Music.execute = function() {
   } else {
     code = Music.editor['getValue']();
   }
-  console.log(code);
 
   Music.interpreter = new Interpreter(code, Music.initInterpreter);
   Music.threads.push(new Music.Thread(Music.interpreter.stateStack));
@@ -868,11 +863,19 @@ Music.execute = function() {
 };
 
 /**
+ * Time in milliseconds for 1/64th of a whole note.
+ * @return {number} Time in ms.
+ */
+Music.getTempo = function() {
+  return 1000 * (2.5 - 2 * Music.speedSlider.getValue()) / 64;
+};
+
+/**
  * Execute a 1/64th tick of the program.
  */
 Music.tick = function() {
   // Delay between start of each beat (1/64ths of a whole note).
-  var scaleDuration = 1000 * (2.5 - 2 * Music.speedSlider.getValue()) / 64;
+  var scaleDuration = Music.getTempo();
   if (!Music.startTime) {
     // Either the first tick, or first tick after slider was adjusted.
     Music.startTime = Date.now() - Music.clock64ths * scaleDuration;
@@ -903,8 +906,8 @@ Music.tick = function() {
     // Program completed
     document.getElementById('spinner').style.visibility = 'hidden';
     Music.workspace.highlightBlock(null);
-    // Playback complete; allow the user to submit this music to gallery.
-    Music.canSubmit = true;
+    // Playback complete; allow the user to submit this music to glockenspiel.
+    document.getElementById('submitButton').removeAttribute('disabled');
   }
 };
 
@@ -1092,6 +1095,34 @@ Music.highlight = function(id, opt_state) {
     }
   }
   Music.workspace.highlightBlock(id, opt_state);
+};
+
+/**
+ * Click the run button.  Start the program.
+ * @param {!Event} e Mouse or touch event.
+ */
+Music.submitButtonClick = function(e) {
+  // Prevent double-clicks or double-taps.
+  if (Music.eventSpam(e)) {
+    return;
+  }
+  if (location.protocol == 'file:') {
+    alert('Cannot submit XHR from "file:" URL.');
+    return;
+  }
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', '/submit');
+  xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+  xhr.onload = function() {
+    if (xhr.readyState == 4) {
+      var text = (xhr.status == 200) ?
+          'Your tune has been sent to the glockenspiel and will play shortly.' :
+          'XHR error.\nStatus: ' + xhr.status;
+      alert(text);
+    }
+  };
+  xhr.send('tempo=' + Music.getTempo() +
+      '&data=' + JSON.stringify(Music.transcript));
 };
 
 /**

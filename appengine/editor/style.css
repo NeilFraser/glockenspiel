@@ -97,13 +97,14 @@ img[src$="help.png"] {
 
 /* Buttons */
 button {
+  background-color: #eee;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  color: #000;
+  font-size: large;
   margin: 5px;
   padding: 10px;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-  font-size: large;
-  background-color: #eee;
-  color: #000;
+  user-select: none;
 }
 button.primary {
   border: 1px solid #dd4b39;
@@ -114,6 +115,9 @@ button.secondary {
   border: 1px solid #4d90fe;
   background-color: #4d90fe;
   color: #fff;
+}
+button:disabled {
+  opacity: 0.5;
 }
 button.primary>img,
 button.secondary>img {
@@ -330,6 +334,10 @@ button.primary {
   opacity: .6;
 }
 
+#submitButton {
+  margin-left: 173px;
+}
+
 /* Slider. */
 .sliderTrack {
   stroke: #aaa;
@@ -352,7 +360,7 @@ button.primary {
   width: 21px;
   background-image: url(icons.png);
 }
-.camera {
+.music {
   background-position: -21px 0px;
 }
 .stop {
@@ -360,7 +368,4 @@ button.primary {
 }
 .run {
   background-position: -63px 0px;
-}
-.gallery {
-  background-position: -63px -21px;
 }

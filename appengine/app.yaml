@@ -1,0 +1,23 @@
+application: glockenspiel
+version: 1
+runtime: python27
+api_version: 1
+threadsafe: no
+
+handlers:
+# Redirect for root directory.
+- url: /
+  script: index_redirect.py
+  secure: always
+
+- url: /submit
+  script: submit.py
+  secure: always
+
+- url: /fetch
+  script: fetch.py
+
+# Client files.
+- url: /client
+  static_dir: client
+  secure: always
