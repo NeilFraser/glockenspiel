@@ -18,6 +18,6 @@ handlers:
   script: fetch.py
 
 # Client files.
-- url: /client
-  static_dir: client
+- url: /editor
+  static_dir: editor
   secure: always

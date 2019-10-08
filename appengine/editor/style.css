@@ -13,20 +13,6 @@ a:hover {
 .farSide {
   text-align: right;
 }
-#containerCode {
-  direction: ltr;
-  background-color: #eee;
-  padding: 5px;
-  margin: 0 3ex;
-  font-size: large;
-  overflow: auto;
-  max-height: 200px;
-}
-
-img[src$="help.png"] {
-  height: 64px;
-  width: 64px;
-}
 
 /* Tabs */
 #tabarea {
@@ -107,13 +93,13 @@ button {
   user-select: none;
 }
 button.primary {
-  border: 1px solid #dd4b39;
   background-color: #dd4b39;
+  border: 1px solid #dd4b39;
   color: #fff;
 }
 button.secondary {
-  border: 1px solid #4d90fe;
   background-color: #4d90fe;
+  border: 1px solid #4d90fe;
   color: #fff;
 }
 button:disabled {
@@ -139,33 +125,33 @@ button:hover:not(:disabled) {
 
 /* Dialogs */
 #dialog {
-  visibility: hidden;
   background-color: #fff;
-  color: #000;
   border: 1px solid #ccc;
-  position: absolute;
   border-radius: 8px;
   box-shadow: 5px 5px 5px #888;
+  color: #000;
   padding: 10px;
+  position: absolute;
+  visibility: hidden;
 }
 #dialogBorder {
-  visibility: hidden;
-  position: absolute;
   background-color: #fff;
-  color: #000;
   border: 1px solid #000;
   border-radius: 6px;
   box-shadow: 5px 5px 5px #888;
+  color: #000;
+  position: absolute;
+  visibility: hidden;
 }
 #dialogShadow {
-  visibility: hidden;
+  background-color: #000;
+  height: 100%;
+  left: 0;
+  opacity: 0.3
   position: fixed;
   top: 0;
-  left: 0;
-  height: 100%;
+  visibility: hidden;
   width: 100%;
-  background-color: #000;
-  opacity: 0.3
 }
 .dialogAnimate {
   transition-property: width height left top opacity;
@@ -180,12 +166,12 @@ button:hover:not(:disabled) {
   z-index: -1;
 }
 #dialogHeader {
-  height: 25px;
-  margin: -10px -10px 15px;
+  background-color: #ddd;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
-  background-color: #ddd;
   cursor: move;
+  height: 25px;
+  margin: -10px -10px 15px;
 }
 #dialog button {
   min-width: 4em;
@@ -200,11 +186,11 @@ button.primary {
 }
 
 #editor {
-  font-size: 16pt;
-  position: fixed !important;
-  height: auto !important;
-  bottom: 10px;
   border: 1px solid #ddd;
+  bottom: 10px;
+  font-size: 16pt;
+  height: auto !important;
+  position: fixed !important;
 }
 
 #blockly {
@@ -218,10 +204,10 @@ button.primary {
 }
 
 #staveBox {
-  position: absolute;
-  border: 1px solid #ccc;
   height: 400px;
   width: 400px;
+  border: 1px solid #ccc;
+  position: absolute;
 }
 
 .stave {
@@ -295,13 +281,12 @@ button.primary {
 }
 
 #musicBox {
-  direction: ltr;
-  position: absolute;
   height: 400px;
   width: 365px;
+  margin-left: 36px;
   overflow-x: scroll;
   overflow-y: hidden;
-  margin-left: 36px;
+  position: absolute;
 }
 
 #notePicker {
@@ -356,9 +341,9 @@ button.primary {
 
 /* Sprited icons. */
 .icon21 {
+  background-image: url(icons.png);
   height: 21px;
   width: 21px;
-  background-image: url(icons.png);
 }
 .music {
   background-position: -21px 0px;

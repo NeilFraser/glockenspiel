@@ -103,9 +103,10 @@ Music.ignoreEditorChanges_ = true;
 
 /**
  * Array of staves.  Each stave is an array of [pitch, duration] tuples.
- * @type {!Array.<!Array.<!Array.<number>>>}
+ * The first element is the tune's tempo.
+ * @type {number|!Array.<!Array.<!Array.<number>>>}
  */
-Music.transcript = [];
+Music.transcript = [0];
 
 /**
  * Number of created Threads.  Always incrementing during execution,
@@ -908,6 +909,8 @@ Music.tick = function() {
     Music.workspace.highlightBlock(null);
     // Playback complete; allow the user to submit this music to glockenspiel.
     document.getElementById('submitButton').removeAttribute('disabled');
+    // Store the tempo in the first position of the transcript.
+    Music.transcript[0] = Music.getTempo();
   }
 };
 
@@ -1115,14 +1118,12 @@ Music.submitButtonClick = function(e) {
   xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
   xhr.onload = function() {
     if (xhr.readyState == 4) {
-      var text = (xhr.status == 200) ?
-          'Your tune has been sent to the glockenspiel and will play shortly.' :
+      var text = (xhr.status == 200) ? xhr.responseText :
           'XHR error.\nStatus: ' + xhr.status;
       alert(text);
     }
   };
-  xhr.send('tempo=' + Music.getTempo() +
-      '&data=' + JSON.stringify(Music.transcript));
+  xhr.send('data=' + JSON.stringify(Music.transcript));
 };
 
 /**

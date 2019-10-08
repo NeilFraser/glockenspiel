@@ -74,12 +74,12 @@
     </table>
 
     <button id="submitButton" class="secondary" disabled title="Play your tune on the glockenspiel.">
-      <img src="1x1.gif" class="music icon21"> Play on glockenspiel
+      <img src="1x1.gif" class="music icon21"> Play on Glockenspiel
     </button>
 
     <div id="tabarea">
       <div id="editorBar" class="tab-bar">
-        <div class="tab tab-selected">Blocks</div>
+        <div class="tab tab-selected">Blockly</div>
         <div class="tab">JavaScript</div>
       </div>
       <div class="tab-bar-clear"></div>
@@ -324,7 +324,14 @@
     <div id="dialogBorder"></div>
     <div id="dialog"></div>
     <div id="help" class="dialogHiddenContent">
-      <div style="padding-bottom: 0.7ex">Compose anything you want. You've got a huge number of new blocks you can explore. Have fun!<br><br>Use the 'See Gallery' button to see what other people have composed. If you compose something interesting, use the 'Submit to Gallery' button to publish it.</div>
+      <div style="padding-bottom: 0.7ex">
+        <ol>
+          <li>Compose a tune using either Blockly or JavaScript.</li>
+          <li>Play the tune on your computer using the "Run Program" button.</li>
+          <li>Play the tune for everyone to hear using the "Play on Glockenspiel" button.</li>
+        </ol>
+        <p><a href="docs.html" target="_blank">API Documentation <img src="link.png" height=10 width=10></a></p>
+      </div>
       <div class="farSide" style="padding: 1ex 3ex 0"><button class="secondary" onclick="MusicDialogs.hideDialog(true)">OK</button></div>
     </div>
   </body>
