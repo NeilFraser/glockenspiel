@@ -309,12 +309,13 @@ Music.blocksToCode = function() {
   Music.startCount = 0;
   var code = Blockly.JavaScript.workspaceToCode(Music.workspace);
   var header = '';
-  var constants = [];
+  // Add constants for all available midi pitches.
+  var pitchConstants = [];
   for (var midi in Music.fromMidi) {
-    constants.push(Music.fromMidi[midi] + '=' + midi);
+    pitchConstants.push(Music.fromMidi[midi] + '=' + midi);
   }
+  header += 'var ' + pitchConstants.join(', ') + ';\n\n';
   // Add 'runThread' functions to the start.
-  header += 'var ' + constants.join(', ') + ';\n';
   for (var i = 1; i <= Music.startCount; i++) {
     header += 'runThread(start' + i + ');\n';
   }
@@ -1133,7 +1134,7 @@ Music.submitButtonClick = function(e) {
  */
 Music.Thread = function(stateStack) {
   this.id = Music.threadCount++;
-  console.info('Thread ' + this.id + ' created.');
+  //console.info('Thread ' + this.id + ' created.');
   // Stave set to undefined means this thread has not played anything yet.
   // Stave set to 1-4 means this thread is visualized.
   // Stave set above 4 will play but not be visualized.
@@ -1192,6 +1193,6 @@ Music.Thread.prototype.dispose = function() {
     Music.highlight(this.highlighedBlock, false);
     this.highlighedBlock = null;
   }
-  console.info('Thread ' + this.id + ' completed.');
+  //console.info('Thread ' + this.id + ' completed.');
   Blockly.utils.arrayRemove(Music.threads, this);
 };

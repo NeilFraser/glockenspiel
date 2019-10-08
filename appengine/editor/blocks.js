@@ -50,13 +50,13 @@ Blockly.Blocks['music_note'] = {
       [{"src": "notes/1-low.png",
         "width": 9, "height": 19, "alt": "whole"}, "1"],
       [{"src": "notes/0.5-low.png",
-        "width": 9, "height": 19, "alt": "half"}, "0.5"],
+        "width": 9, "height": 19, "alt": "half"}, "1/2"],
       [{"src": "notes/0.25-low.png",
-        "width": 9, "height": 19, "alt": "quarter"}, "0.25"],
+        "width": 9, "height": 19, "alt": "quarter"}, "1/4"],
       [{"src": "notes/0.125-low.png",
-        "width": 9, "height": 19, "alt": "eighth"}, "0.125"],
+        "width": 9, "height": 19, "alt": "eighth"}, "1/8"],
       [{"src": "notes/0.0625-low.png",
-        "width": 9, "height": 19, "alt": "sixteenth"}, "0.0625"]
+        "width": 9, "height": 19, "alt": "sixteenth"}, "1/16"]
     ];
     this.jsonInit({
       "message0": "play %1 note %2",
@@ -84,7 +84,7 @@ Blockly.Blocks['music_note'] = {
 Blockly.JavaScript['music_note'] = function(block) {
   var pitch = Blockly.JavaScript.valueToCode(block, 'PITCH',
       Blockly.JavaScript.ORDER_COMMA) || 'C7';
-  return 'play(' + Number(block.getFieldValue('DURATION')) + ', ' + pitch +
+  return 'play(' + block.getFieldValue('DURATION') + ', ' + pitch +
       ', \'block_id_' + block.id + '\');\n';
 };
 
@@ -104,13 +104,13 @@ Blockly.Blocks['music_rest'] = {
             [{"src": "rests/1.png",
               "width": 10, "height": 20, "alt": "whole"}, "1"],
             [{"src": "rests/0.5.png",
-              "width": 10, "height": 20, "alt": "half"}, "0.5"],
+              "width": 10, "height": 20, "alt": "half"}, "1/2"],
             [{"src": "rests/0.25.png",
-              "width": 10, "height": 20, "alt": "quarter"}, "0.25"],
+              "width": 10, "height": 20, "alt": "quarter"}, "1/4"],
             [{"src": "rests/0.125.png",
-              "width": 10, "height": 20, "alt": "eighth"}, "0.125"],
+              "width": 10, "height": 20, "alt": "eighth"}, "1/8"],
             [{"src": "rests/0.0625.png",
-              "width": 10, "height": 20, "alt": "sixteenth"}, "0.0625"]
+              "width": 10, "height": 20, "alt": "sixteenth"}, "1/16"]
           ]
         }
       ],
@@ -124,7 +124,7 @@ Blockly.Blocks['music_rest'] = {
 };
 
 Blockly.JavaScript['music_rest'] = function(block) {
-  return 'rest(' + Number(block.getFieldValue('DURATION')) +
+  return 'rest(' + block.getFieldValue('DURATION') +
       ', \'block_id_' + block.id + '\');\n';
 };
 

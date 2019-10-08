@@ -147,7 +147,7 @@ button:hover:not(:disabled) {
   background-color: #000;
   height: 100%;
   left: 0;
-  opacity: 0.3
+  opacity: 0.3;
   position: fixed;
   top: 0;
   visibility: hidden;

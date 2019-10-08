@@ -91,7 +91,7 @@
       <block type="music_start" x="180" y="50">
         <statement name="STACK">
           <block type="music_note">
-            <field name="DURATION">0.25</field>
+            <field name="DURATION">1/4</field>
             <value name="PITCH">
               <shadow type="music_pitch">
                 <field name="PITCH">C6</field>
@@ -99,7 +99,7 @@
             </value>
             <next>
               <block type="music_note">
-                <field name="DURATION">0.25</field>
+                <field name="DURATION">1/4</field>
                 <value name="PITCH">
                   <shadow type="music_pitch">
                     <field name="PITCH">E6</field>
@@ -107,7 +107,7 @@
                 </value>
                 <next>
                   <block type="music_note">
-                    <field name="DURATION">0.25</field>
+                    <field name="DURATION">1/4</field>
                     <value name="PITCH">
                       <shadow type="music_pitch">
                         <field name="PITCH">G6</field>
@@ -115,7 +115,7 @@
                     </value>
                     <next>
                       <block type="music_note">
-                        <field name="DURATION">0.25</field>
+                        <field name="DURATION">1/4</field>
                         <value name="PITCH">
                           <shadow type="music_pitch">
                             <field name="PITCH">C7</field>
@@ -138,14 +138,16 @@
           <field name="PITCH">C7</field>
         </block>
         <block type="music_note">
-          <field name="DURATION">0.25</field>
+          <field name="DURATION">1/4</field>
           <value name="PITCH">
             <shadow type="music_pitch">
               <field name="PITCH">C7</field>
             </shadow>
           </value>
         </block>
-        <block type="music_rest"></block>
+        <block type="music_rest">
+          <field name="DURATION">1/4</field>
+        </block>
         <block type="music_start" id="music_start"></block>
       </category>
       <category name="Logic">
