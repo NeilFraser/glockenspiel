@@ -27,7 +27,7 @@ import urllib2
 from gpiozero import LED
 
 
-LOG = open("player.log", "w")
+LOG = open("player.log", "w", 0)
 
 #SOURCE = "http://localhost:13080/fetch"
 SOURCE = "https://glockenspiel.appspot.com/fetch"
