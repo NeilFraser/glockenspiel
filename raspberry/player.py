@@ -48,8 +48,8 @@ class PlayForever(threading.Thread):
     self.outputs = {}
     pinNumber = 2
     for note in xrange(81, 106):
-      outputs[note] = LED(pinNumber)
-      outputs[note].off()
+      self.outputs[note] = LED(pinNumber)
+      self.outputs[note].off()
       pinNumber += 1
 
   def run(self):
