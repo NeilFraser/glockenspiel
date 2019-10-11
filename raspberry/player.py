@@ -24,16 +24,20 @@ import json
 import threading
 import time
 import urllib2
+from gpiozero import LED
 
-SOURCE = "http://localhost:13080/fetch"
-# SOURCE = "https://glockenspiel.appspot.com/fetch"
+
+#SOURCE = "http://localhost:13080/fetch"
+SOURCE = "https://glockenspiel.appspot.com/fetch"
 
 # Strike time for hammer in seconds.
-STRIKE_TIME = 10 / 1000.0;
+STRIKE_TIME = 10 / 1000.0
 
 # Global variable used to pass parsed JSON from the fetch loop
 # to the play thread.
 new_data = None
+
+print("Watching %s..." % SOURCE)
 
 class PlayForever(threading.Thread):
   """
@@ -41,6 +45,12 @@ class PlayForever(threading.Thread):
   """
   def __init__(self):
     threading.Thread.__init__(self)
+    self.outputs = {}
+    pinNumber = 2
+    for note in xrange(81, 106):
+      outputs[note] = LED(pinNumber)
+      outputs[note].off()
+      pinNumber += 1
 
   def run(self):
     global new_data
@@ -65,7 +75,7 @@ class PlayForever(threading.Thread):
         # Number of 1/64ths notes since the start.
         clock64ths = 0
         # Time of start of execution in seconds.
-        startTime = time.time();
+        startTime = time.time()
 
       done = True
       for i in xrange(channels):
@@ -74,18 +84,21 @@ class PlayForever(threading.Thread):
           done = False
           if pauseUntil64ths[i] <= clock64ths:
             (note, duration) = transcript[pointers[i]]
-            if note >= 81 and note <= 105:
-              # TODO:
-              print("Play: %d" % note)
+            if self.outputs.has_key(note):
+              self.outputs[note].on()
             pauseUntil64ths[i] = duration * 64 + clock64ths
             pointers[i] += 1
 
+      time.sleep(STRIKE_TIME)
+      for output in self.outputs.keys():
+        output.off()
+
       if done:
+        if clock64ths > 0:
+          clock64ths = 0
+          print("Finished playing tune.  Waiting for next tune.")
         time.sleep(1)
       else:
-        time.sleep(STRIKE_TIME)
-        # TODO: Turn all solenoids off.
-
         clock64ths += 1
         s = (startTime + clock64ths * tempo) - time.time()
         if (s > 0):
@@ -111,4 +124,3 @@ def fetch():
 while(True):
   fetch()
   time.sleep(5)
-
