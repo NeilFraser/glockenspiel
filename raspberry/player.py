@@ -91,7 +91,7 @@ class PlayForever(threading.Thread):
 
       time.sleep(STRIKE_TIME)
       for note in self.outputs.keys():
-        self.output[note].off()
+        self.outputs[note].off()
 
       if done:
         if clock64ths > 0:
