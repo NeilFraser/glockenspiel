@@ -113,12 +113,16 @@ f.start()
 def fetch():
   global new_data
   # Checks to see if there's a new tune on App Engine.
-  response = urllib2.urlopen(SOURCE)
+  try:
+    response = urllib2.urlopen(SOURCE)
+  except Exception as e:
+    print(e)
+    return
   text = response.read()
   try:
     new_data = json.loads(text)
   except ValueError:
-    pass
+    print("Invalid JSON.")
 
 
 while(True):
