@@ -27,7 +27,7 @@ import urllib2
 from gpiozero import LED
 
 
-LOG = open("player.log", "w", 0)
+LOG = open("/home/pi/player.log", "w", 0)
 
 #SOURCE = "http://localhost:13080/fetch"
 SOURCE = "https://glockenspiel.appspot.com/fetch"
@@ -121,10 +121,11 @@ def fetch():
     LOG.write("Failure to fetch: %s\nTrying again.")
     return
   text = response.read()
-  try:
-    new_data = json.loads(text)
-  except ValueError:
-    LOG.write("Invalid JSON.\nTrying again.\n")
+  if text.trim():
+    try:
+      new_data = json.loads(text)
+    except ValueError:
+      LOG.write("Invalid JSON.\nTrying again.\n")
 
 
 while(True):
