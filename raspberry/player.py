@@ -94,8 +94,8 @@ class PlayForever(threading.Thread):
         self.outputs[note].off()
 
       if done:
-        if clock64ths > 0:
-          clock64ths = 0
+        if channels > 0:
+          channels = 0
           print("Finished playing tune.  Waiting for next tune.")
         time.sleep(1)
       else:
