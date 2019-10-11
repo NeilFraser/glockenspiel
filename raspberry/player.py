@@ -27,6 +27,8 @@ import urllib2
 from gpiozero import LED
 
 
+LOG = open("player.log", "w")
+
 #SOURCE = "http://localhost:13080/fetch"
 SOURCE = "https://glockenspiel.appspot.com/fetch"
 
@@ -37,7 +39,7 @@ STRIKE_TIME = 10 / 1000.0
 # to the play thread.
 new_data = None
 
-print("Watching %s..." % SOURCE)
+LOG.write("Watching %s...\n" % SOURCE)
 
 class PlayForever(threading.Thread):
   """
@@ -61,7 +63,7 @@ class PlayForever(threading.Thread):
         tempo = new_data[0] / 1000.0
         transcripts = new_data[1:]
         new_data = None
-        print("Got new tune: %s" % transcripts)
+        LOG.write("Got new tune: %s\n" % transcripts)
 
         # Insert a pause between the old tune and the new one.
         time.sleep(1)
@@ -96,7 +98,7 @@ class PlayForever(threading.Thread):
       if done:
         if channels > 0:
           channels = 0
-          print("Finished playing tune.  Waiting for next tune.")
+          LOG.write("Finished playing tune.  Waiting for next tune.\n")
         time.sleep(1)
       else:
         clock64ths += 1
@@ -116,13 +118,13 @@ def fetch():
   try:
     response = urllib2.urlopen(SOURCE)
   except Exception as e:
-    print(e)
+    LOG.write("Failure to fetch: %s\nTrying again.")
     return
   text = response.read()
   try:
     new_data = json.loads(text)
   except ValueError:
-    print("Invalid JSON.")
+    LOG.write("Invalid JSON.\nTrying again.\n")
 
 
 while(True):
