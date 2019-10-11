@@ -90,7 +90,7 @@ class PlayForever(threading.Thread):
             pointers[i] += 1
 
       time.sleep(STRIKE_TIME)
-      for output in self.outputs.keys():
+      for output in self.outputs.values():
         output.off()
 
       if done:
