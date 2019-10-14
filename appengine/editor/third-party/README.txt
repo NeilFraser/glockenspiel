@@ -8,8 +8,8 @@ Modifications:
 - all modes except 'mode-javascript.js' deleted.
 
 * blockly
-Source: https://github.com/google/blockly/tree/develop
-Date: 7 October 2019
+Source: https://github.com/google/blockly/tree/master
+Date: 14 October 2019
 Modifications: None.
 
 * blockly-games
@@ -19,7 +19,7 @@ Modifications: 'provide' and 'require' deleted.
 
 * JS-Interpreter
 Source: https://blockly.games/third-party/JS-Interpreter/compressed.js
-Date: 15 September 2019
+Date: 14 October 2019
 Modifications: None.
 
 * soundfont

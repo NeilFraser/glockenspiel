@@ -121,7 +121,7 @@ def fetch():
     LOG.write("Failure to fetch: %s\nTrying again.")
     return
   text = response.read()
-  if text.trim():
+  if text.strip():
     try:
       new_data = json.loads(text)
     except ValueError:
