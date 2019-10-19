@@ -5,7 +5,11 @@ Source: https://github.com/ajaxorg/ace-builds/tree/master/src-min-noconflict
 Date: 15 September 2019
 Modifications:
 - 'snippets' directory deleted.
-- all modes except 'mode-javascript.js' deleted.
+- all keybinding files deleted.
+- all ext files deleted.
+- all theme files except 'theme-chrome.js' deleted.
+- all mode files except 'mode-javascript.js' deleted.
+- all worker files except 'worker-javascript.js' deleted.
 
 * blockly
 Source: https://github.com/google/blockly/tree/master
