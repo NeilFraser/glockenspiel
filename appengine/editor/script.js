@@ -1057,6 +1057,10 @@ Music.animate = function(id) {
  * @param {string} opt_id ID of block.
  */
 Music.play = function(duration, pitch, opt_id) {
+  if (isNaN(duration) || duration < 1 / 64) {
+    console.warn('Invalid note duration: ' + duration);
+    return;
+  }
   pitch = Math.round(pitch);
   if (!Music.fromMidi[pitch]) {
     console.warn('MIDI note out of range (81-105): ' + pitch);
@@ -1079,6 +1083,10 @@ Music.play = function(duration, pitch, opt_id) {
  * @param {string=} opt_id ID of block.
  */
 Music.rest = function(duration, opt_id) {
+  if (isNaN(duration) || duration < 1 / 64) {
+    console.warn('Invalid rest duration: ' + duration);
+    return;
+  }
   Music.stopSound(Music.activeThread);
   Music.activeThread.pauseUntil64ths = duration * 64 + Music.clock64ths;
   // Make a record of this rest.
