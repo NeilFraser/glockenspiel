@@ -260,10 +260,12 @@ Music.init = function() {
   Music.bindClick('resetButton', Music.resetButtonClick);
   Music.bindClick('submitButton', Music.submitButtonClick);
 
+  // Lazy-load the ESx-ES5 transpiler.
+  setTimeout(Music.importBabel, 1);
   // Lazy-load the JavaScript interpreter.
-  setTimeout(Music.importInterpreter, 1);
+  setTimeout(Music.importInterpreter, 2);
   // Lazy-load the sounds.
-  setTimeout(Music.importSounds, 1);
+  setTimeout(Music.importSounds, 3);
 
   Music.bindClick('helpButton', Music.showHelp);
   setTimeout(Music.showHelp, 1000);
@@ -406,6 +408,35 @@ Music.registerSounds = function() {
     sounds.push({'src': Music.fromMidi[midi] + '.mp3', id: midi});
   }
   createjs.Sound.registerSounds(sounds, assetsPath);
+};
+
+/**
+ * Load the Babel transpiler.
+ */
+Music.importBabel = function() {
+  //<script type="text/javascript"
+  //  src="third-party/babel.min.js"></script>
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src = 'third-party/babel.min.js';
+  document.head.appendChild(script);
+};
+
+/**
+ * Attempt to transpile user code to ES5.
+ * @param {string} code User code that may contain ES6+ syntax.
+ * @return {string|undefined} ES5 code, or undefined if Babel not loaded.
+ * @throws SyntaxError if code is unparsable.
+ */
+Music.transpileToEs5 = function(code) {
+  if (typeof Babel != 'object') {
+    return undefined;
+  }
+  var options = {
+    'presets': ['es2015']
+  };
+  var fish = Babel.transform(code, options);
+  return fish.code;
 };
 
 /**
@@ -858,7 +889,14 @@ Music.execute = function() {
   } else {
     code = Music.editor['getValue']();
   }
-
+  try {
+    code = Music.transpileToEs5(code) || code;
+  } catch (e) {
+    // Syntax error!
+    Music.resetButtonClick();
+    alert(e);
+    throw e;
+  }
   Music.interpreter = new Interpreter(code, Music.initInterpreter);
   Music.threads.push(new Music.Thread(Music.interpreter.stateStack));
   setTimeout(Music.tick, 100);
