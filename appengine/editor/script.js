@@ -207,17 +207,24 @@ Music.init = function() {
   onresize(null);
 
   // Inject JS editor.
-  var defaultCode = 'play(7);';
-  Music.editor = window['ace']['edit']('editor');
-  Music.editor['setTheme']('ace/theme/chrome');
-  Music.editor['setShowPrintMargin'](false);
-  var session = Music.editor['getSession']();
+  var ace = window['ace'];
+  ace['require']('ace/ext/language_tools');
+  var editor = ace['edit']('editor');
+  Music.editor = editor;
+  editor['setTheme']('ace/theme/chrome');
+  editor['setShowPrintMargin'](false);
+  editor['setOptions']({
+    'enableBasicAutocompletion': true,
+    'enableLiveAutocompletion': true
+  });
+  var session = editor['getSession']();
   session['setMode']('ace/mode/javascript');
   session['setTabSize'](2);
   session['setUseSoftTabs'](true);
   session['setUseWrapMode'](true);
   session['on']('change', Music.editorChanged);
-  Music.editor['setValue'](defaultCode, -1);
+  var defaultCode = 'play(7);';
+  editor['setValue'](defaultCode, -1);
 
   // Inject Blockly
   var toolbox = document.getElementById('toolbox');
