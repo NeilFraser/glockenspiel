@@ -301,19 +301,15 @@ Music.changeTab = function(index) {
   }
   if (index == JAVASCRIPT && Music.blocksEnabled_) {
     // Remove keywords not supported by the JS Interpreter.
-    var keywords = Music.editor.getSession().getMode().$highlightRules.$keywordList;
+    var keywords = Music.editor['getSession']()['getMode']()['$highlightRules']['$keywordList'];
     if (keywords) {
-      var notSupported = ('Iterator,Proxy,Namespace,QName,XML,XMLList,' +
-          'ArrayBuffer,Float32Array,Float64Array,Int16Array,Int32Array,' +
-          'Int8Array,Uint16Array,Uint32Array,Uint8Array,Uint8ClampedArray,' +
-          'InternalError,StopIteration,prototype,document,' +
-          '__parent__,__count__,__proto__').split(',');
-      for (var i = 0; i < notSupported.length; i++) {
-        var n = keywords.indexOf(notSupported[i]);
-        if (n != -1) {
-          keywords.splice(n, 1);
-        }
-      }
+      keywords.splice(0, Infinity, 'arguments', 'this', 'NaN', 'Math', 'JSON',
+          'parseInt', 'parseFloat', 'isNaN', 'isFinite', 'eval', 'String',
+          'RegExp', 'Object', 'Number', 'Function', 'Date', 'Boolean', 'Array',
+          'while', 'var', 'let', 'typeof', 'try', 'throw', 'switch', 'return',
+          'new', 'instanceof', 'of', 'in', 'if', 'function', 'for', 'finally',
+          'else', 'do', 'delete', 'continue', 'catch', 'case', 'break', 'const',
+          'undefined', 'Infinity', 'null', 'false', 'true');
     }
     // Synchronize the JS editor.
     var code = Music.blocksToCode();
