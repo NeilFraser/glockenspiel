@@ -299,8 +299,23 @@ Music.changeTab = function(index) {
     var div = document.querySelector(name);
     div.style.visibility = (index == BLOCKS) ? 'visible' : 'hidden';
   }
-  // Synchronize the JS editor.
   if (index == JAVASCRIPT && Music.blocksEnabled_) {
+    // Remove keywords not supported by the JS Interpreter.
+    var keywords = Music.editor.getSession().getMode().$highlightRules.$keywordList;
+    if (keywords) {
+      var notSupported = ('Iterator,Proxy,Namespace,QName,XML,XMLList,' +
+          'ArrayBuffer,Float32Array,Float64Array,Int16Array,Int32Array,' +
+          'Int8Array,Uint16Array,Uint32Array,Uint8Array,Uint8ClampedArray,' +
+          'InternalError,StopIteration,prototype,document,' +
+          '__parent__,__count__,__proto__').split(',');
+      for (var i = 0; i < notSupported.length; i++) {
+        var n = keywords.indexOf(notSupported[i]);
+        if (n != -1) {
+          keywords.splice(n, 1);
+        }
+      }
+    }
+    // Synchronize the JS editor.
     var code = Music.blocksToCode();
     code = code.replace(/, 'block_id_([^']+)'/g, '')
     Music.ignoreEditorChanges_ = true;
