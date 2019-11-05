@@ -149,10 +149,6 @@ Music.fromMidi = {
  * Initialize Blockly and the music.  Called on page load.
  */
 Music.init = function() {
-  // Switch to zero-based indexing so that later JS levels match the blocks.
-  Blockly.Blocks.ONE_BASED_INDEXING = false;
-  Blockly.JavaScript.ONE_BASED_INDEXING = false;
-
   // Setup the tabs.
   function tabHandler(selectedIndex) {
     return function() {
@@ -231,6 +227,7 @@ Music.init = function() {
   Music.workspace = Blockly.inject('blockly',
       {'disable': false,
        'media': 'third-party/blockly/media/',
+       'oneBasedIndex': false,
        'rtl': false,
        'toolbox': toolbox,
        'zoom': {
