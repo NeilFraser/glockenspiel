@@ -1,23 +1,12 @@
-application: glockenspiel
-version: 1
-runtime: python27
-api_version: 1
-threadsafe: no
+runtime: python37
 
 handlers:
-# Redirect for root directory.
-- url: /
-  script: index_redirect.py
-  secure: always
-
-- url: /submit
-  script: submit.py
-  secure: always
-
-- url: /fetch
-  script: fetch.py
-
 # Client files.
 - url: /editor
   static_dir: editor
+  secure: always
+
+# Dynamic content.
+- url: /.*
+  script: auto
   secure: always
