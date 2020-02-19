@@ -178,7 +178,7 @@ Music.init = function() {
         Math.max(0, top + tabDiv.offsetHeight - window.pageYOffset) + 'px';
     var divLeft = '420px';
     var divWidth = (window.innerWidth - 440) + 'px';
-    for (var i = 0, div; div = divs[i]; i++) {
+    for (var i = 0, div; (div = divs[i]); i++) {
       div.style.top = divTop;
       div.style.left = divLeft;
       div.style.width = divWidth;
@@ -275,13 +275,13 @@ Music.changeTab = function(index) {
   var JAVASCRIPT = 1;
   // Show the correct tab contents.
   var names = ['blockly', 'editor'];
-  for (var i = 0, name; name = names[i]; i++) {
+  for (var i = 0, name; (name = names[i]); i++) {
     var div = document.getElementById(name);
     div.style.visibility = (i == index) ? 'visible' : 'hidden';
   }
   // Show/hide Blockly divs.
   var names = ['.blocklyTooltipDiv', '.blocklyToolboxDiv'];
-  for (var i = 0, name; name = names[i]; i++) {
+  for (var i = 0, name; (name = names[i]); i++) {
     var div = document.querySelector(name);
     div.style.visibility = (index == BLOCKS) ? 'visible' : 'hidden';
   }
@@ -815,8 +815,9 @@ Music.resetButtonClick = function(opt_e) {
  * Inject the Music API into a JavaScript interpreter.
  * @param {!Interpreter} interpreter The JS-Interpreter.
  * @param {!Interpreter.Object} globalObject Global object.
+ * @private
  */
-Music.initInterpreter = function(interpreter, globalObject) {
+Music.initInterpreter_ = function(interpreter, globalObject) {
   // API
   var wrapper;
   wrapper = function(duration, pitch, id) {
@@ -872,13 +873,13 @@ Music.initInterpreter = function(interpreter, globalObject) {
 Music.execute = function() {
   if (!('Interpreter' in window)) {
     // Interpreter lazy loads and hasn't arrived yet.  Try again later.
-    console.log('Waiting for JS-Interpreter to load.')
+    console.log('Waiting for JS-Interpreter to load.');
     setTimeout(Music.execute, 250);
     return;
   }
   if (!('createjs' in window) || !createjs.Sound.isReady()) {
     // Sound JS lazy loads and hasn't arrived yet.  Try again later.
-    console.log('Waiting for SoundJS to load.')
+    console.log('Waiting for SoundJS to load.');
     setTimeout(Music.execute, 250);
     return;
   }
@@ -901,7 +902,7 @@ Music.execute = function() {
     alert(e);
     throw e;
   }
-  Music.interpreter = new Interpreter(code, Music.initInterpreter);
+  Music.interpreter = new Interpreter(code, Music.initInterpreter_);
   Music.threads.push(new Music.Thread(Music.interpreter.stateStack));
   setTimeout(Music.tick, 100);
 };
@@ -1058,7 +1059,7 @@ Music.animate = function(id) {
  * Play one note.
  * @param {number} duration Fraction of a whole note length to play.
  * @param {number} pitch MIDI note number to play (81-105).
- * @param {string} opt_id ID of block.
+ * @param {string=} opt_id ID of block.
  */
 Music.play = function(duration, pitch, opt_id) {
   if (isNaN(duration) || duration < 1 / 64) {
@@ -1068,7 +1069,7 @@ Music.play = function(duration, pitch, opt_id) {
   pitch = Math.round(pitch);
   if (!Music.fromMidi[pitch]) {
     console.warn('MIDI note out of range (81-105): ' + pitch);
-    Music.rest(duration, id);
+    Music.rest(duration, opt_id);
     return;
   }
   Music.stopSound(Music.activeThread);
