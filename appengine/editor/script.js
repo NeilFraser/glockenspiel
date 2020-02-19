@@ -286,7 +286,7 @@ Music.changeTab = function(index) {
     div.style.visibility = (index == BLOCKS) ? 'visible' : 'hidden';
   }
   if (index == JAVASCRIPT && Music.blocksEnabled_) {
-    // Remove keywords not supported by the JS Interpreter.
+    // Remove keywords not supported by the JS-Interpreter.
     var keywords = Music.editor['getSession']()['getMode']()['$highlightRules']['$keywordList'];
     if (keywords) {
       keywords.splice(0, Infinity, 'arguments', 'this', 'NaN', 'Math', 'JSON',
@@ -299,7 +299,7 @@ Music.changeTab = function(index) {
     }
     // Synchronize the JS editor.
     var code = Music.blocksToCode();
-    code = code.replace(/, 'block_id_([^']+)'/g, '')
+    code = code.replace(/, 'block_id_([^']+)'/g, '');
     Music.ignoreEditorChanges_ = true;
     Music.editor['setValue'](code, -1);
     Music.ignoreEditorChanges_ = false;
@@ -813,22 +813,22 @@ Music.resetButtonClick = function(opt_e) {
 
 /**
  * Inject the Music API into a JavaScript interpreter.
- * @param {!Interpreter} interpreter The JS Interpreter.
- * @param {!Interpreter.Object} scope Global scope.
+ * @param {!Interpreter} interpreter The JS-Interpreter.
+ * @param {!Interpreter.Object} globalObject Global object.
  */
-Music.initInterpreter = function(interpreter, scope) {
+Music.initInterpreter = function(interpreter, globalObject) {
   // API
   var wrapper;
   wrapper = function(duration, pitch, id) {
     Music.play(duration, pitch, id);
   };
-  interpreter.setProperty(scope, 'play',
+  interpreter.setProperty(globalObject, 'play',
       interpreter.createNativeFunction(wrapper));
 
   wrapper = function(duration, id) {
     Music.rest(duration, id);
   };
-  interpreter.setProperty(scope, 'rest',
+  interpreter.setProperty(globalObject, 'rest',
       interpreter.createNativeFunction(wrapper));
 
   wrapper = function(func) {
@@ -839,21 +839,21 @@ Music.initInterpreter = function(interpreter, scope) {
     var node = new interpreter.nodeConstructor({options:{}});
     node['type'] = 'Program';
     node['body'] = [];
-    var state = new Interpreter.State(node, interpreter.global);
+    var state = new Interpreter.State(node, interpreter.globalScope);
     state.done = false;
     stateStack.push(state);
     // ExpressionStatement node.
     var node = new interpreter.nodeConstructor({options:{}});
     node['type'] = 'ExpressionStatement';
-    var state = new Interpreter.State(node, interpreter.global);
+    var state = new Interpreter.State(node, interpreter.globalScope);
     state.done_ = true;
     stateStack.push(state);
     // CallExpression node (fully populated, ready to call).
     var node = new interpreter.nodeConstructor({options:{}});
     node['type'] = 'CallExpression';
-    var state = new Interpreter.State(node, interpreter.global);
+    var state = new Interpreter.State(node, interpreter.globalScope);
     state.doneCallee_ = true;
-    state.funcThis_ = interpreter.global;
+    state.funcThis_ = interpreter.globalScope;
     state.func_ = func;
     state.doneArgs_ = true;
     state.arguments_ = [];
@@ -862,7 +862,7 @@ Music.initInterpreter = function(interpreter, scope) {
     var thread = new Music.Thread(stateStack);
     Music.threads.push(thread);
   };
-  interpreter.setProperty(scope, 'runThread',
+  interpreter.setProperty(globalObject, 'runThread',
       interpreter.createNativeFunction(wrapper));
 };
 
@@ -1179,7 +1179,7 @@ Music.submitButtonClick = function(e) {
 
 /**
  * One execution thread.
- * @param {!Array.<!Interpreter.State>} stateStack JS Interpreter state stack.
+ * @param {!Array.<!Interpreter.State>} stateStack JS-Interpreter state stack.
  * @constructor
  */
 Music.Thread = function(stateStack) {
