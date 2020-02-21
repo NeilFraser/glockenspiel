@@ -215,7 +215,7 @@ Music.init = function() {
   var toolbox = document.getElementById('toolbox');
   Music.workspace = Blockly.inject('blockly',
       {'disable': false,
-       'media': 'third-party/blockly/media/',
+       'media': '../third-party/blockly/media/',
        'oneBasedIndex': false,
        'rtl': false,
        'toolbox': toolbox,
@@ -383,10 +383,10 @@ Music.bindClick = function(el, func) {
  */
 Music.importInterpreter = function() {
   //<script type="text/javascript"
-  //  src="third-party/JS-Interpreter/compressed.js"></script>
+  //  src="../third-party/JS-Interpreter/compressed.js"></script>
   var script = document.createElement('script');
   script.type = 'text/javascript';
-  script.src = 'third-party/JS-Interpreter/compressed.js';
+  script.src = '../third-party/JS-Interpreter/compressed.js';
   document.head.appendChild(script);
 };
 
@@ -394,10 +394,10 @@ Music.importInterpreter = function() {
  * Load the sounds.
  */
 Music.importSounds = function() {
-  //<script type="text/javascript" src="third-party/soundjs.min.js"></script>
+  //<script type="text/javascript" src="../third-party/soundjs.min.js"></script>
   var script = document.createElement('script');
   script.type = 'text/javascript';
-  script.src = 'third-party/soundjs.min.js';
+  script.src = '../third-party/soundjs.min.js';
   script.onload = Music.registerSounds;
   document.head.appendChild(script);
 };
@@ -406,7 +406,7 @@ Music.importSounds = function() {
  * Register the sounds.
  */
 Music.registerSounds = function() {
-  var assetsPath = 'third-party/soundfont/';
+  var assetsPath = '../third-party/soundfont/';
   var sounds = [];
   for (var midi in Music.fromMidi) {
     sounds.push({'src': Music.fromMidi[midi] + '.mp3', id: midi});
@@ -419,10 +419,10 @@ Music.registerSounds = function() {
  */
 Music.importBabel = function() {
   //<script type="text/javascript"
-  //  src="third-party/babel.min.js"></script>
+  //  src="../third-party/babel.min.js"></script>
   var script = document.createElement('script');
   script.type = 'text/javascript';
-  script.src = 'third-party/babel.min.js';
+  script.src = '../third-party/babel.min.js';
   document.head.appendChild(script);
 };
 
@@ -833,7 +833,7 @@ Music.initInterpreter_ = function(interpreter, globalObject) {
       interpreter.createNativeFunction(wrapper));
 
   wrapper = function(func) {
-    if (Music.threads.length > 16) throw 'Too many threads.';
+    if (Music.threads.length > 16) throw Error('Too many threads');
     // Create a new state stack that will run the provided function.
     // Program state (empty).
     var stateStack = [];

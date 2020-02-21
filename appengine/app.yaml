@@ -6,6 +6,10 @@ handlers:
   static_dir: editor
   secure: always
 
+- url: /third-party
+  static_dir: third-party
+  secure: always
+
 # Dynamic content.
 - url: /.*
   script: auto
