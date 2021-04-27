@@ -84,8 +84,7 @@ class PlayForever(threading.Thread):
     threading.Thread.__init__(self)
     self.outputs = {}
     for midi, pinNumber in PINOUT.items():
-      self.outputs[midi] = LED(pinNumber)
-      self.outputs[midi].off()
+      self.outputs[midi] = LED(pinNumber, initial_value=False)
     signal.signal(signal.SIGINT, self.shutdown)
 
   def run(self):
@@ -157,12 +156,12 @@ class PlayForever(threading.Thread):
         if (s > 0):
           time.sleep(s)
 
-  def shutdown(sig, frame):
+  def shutdown(self, sig, frame):
+    # Gracefully shutdown without spewing traceback.
     LOG.write("Shutting down.\n")
     for output in self.outputs.values():
       output.close()
     sys.exit(0)
-
 
 f = PlayForever()
 f.daemon = True
