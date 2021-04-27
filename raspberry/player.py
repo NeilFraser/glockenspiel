@@ -24,7 +24,7 @@ import json
 import threading
 import time
 import urllib2
-from gpiozero import LED
+from gpiozero import LED, Button
 
 
 LOG = open("/home/pi/player.log", "w", 0)
@@ -84,10 +84,10 @@ class PlayForever(threading.Thread):
     for midi, pinNumber in PINOUT.items():
       self.outputs[midi] = LED(pinNumber)
       self.outputs[midi].off()
-    LED(RESET_PIN).off()
 
   def run(self):
     global new_data, RESET_PIN
+    resetLed = None
     transcripts = []
     channels = 0
     while(True):
@@ -110,8 +110,6 @@ class PlayForever(threading.Thread):
         clock64ths = 0
         # Time of start of execution in seconds.
         startTime = time.time()
-        # Turn on the reset LED.
-        LED(RESET_PIN).on()
 
       done = True
       for i in xrange(channels):
@@ -129,14 +127,26 @@ class PlayForever(threading.Thread):
       for note in self.outputs.keys():
         self.outputs[note].off()
 
+      # Switch the reset GPIO pin from LED to button for a moment.
+      # If pressed, terminate the tune.
+      if resetLed:
+        resetLed.close()
+      resetButton = BUTTON(RESET_PIN)
+      if resetButton.is_pressed:
+        LOG.write("Tune manually terminated with local reset button.\n")
+        done = True
+      resetButton.close()
+      resetLed = LED(RESET_PIN)
+
       if done:
+        resetLed.off()
         if channels > 0:
           channels = 0
-          # Turn off the reset LED.
-          LED(RESET_PIN).off()
           LOG.write("Finished playing tune.  Waiting for next tune.\n")
         time.sleep(1)
       else:
+        # Turn on the reset LED.
+        resetLed.on()
         clock64ths += 1
         s = (startTime + clock64ths * tempo) - time.time()
         if (s > 0):
