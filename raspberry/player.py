@@ -64,7 +64,7 @@ PINOUT = {
   105: 20   # A7
 }
 
-# GPIO pin number of reset button.
+# GPIO pin number of reset button/LED.
 RESET_PIN = 21
 
 # Global variable used to pass parsed JSON from the fetch loop
@@ -131,11 +131,11 @@ class PlayForever(threading.Thread):
       # If pressed, terminate the tune.
       if resetLed:
         resetLed.close()
-      resetButton = Button(RESET_PIN)
-      if resetButton.is_pressed:
-        LOG.write("Tune manually terminated with local reset button.\n")
-        done = True
-      resetButton.close()
+      #resetButton = Button(RESET_PIN)
+      #if resetButton.is_pressed:
+      #  LOG.write("Tune manually terminated with local reset button.\n")
+      #  done = True
+      #resetButton.close()
       resetLed = LED(RESET_PIN)
 
       if done:
