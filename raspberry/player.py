@@ -117,6 +117,7 @@ class PlayForever(threading.Thread):
         self.pi.write(RESET_PIN, 1)
 
       done = True
+      activeNotes = []
       for i in xrange(channels):
         transcript = transcripts[i]
         if pointers[i] < len(transcript):
@@ -125,11 +126,12 @@ class PlayForever(threading.Thread):
             (note, duration) = transcript[pointers[i]]
             if PINOUT.has_key(note):
               self.pi.write(PINOUT[note], 1)
+              activeNotes.append(PINOUT[note])
             pauseUntil64ths[i] = duration * 64 + clock64ths
             pointers[i] += 1
 
       time.sleep(STRIKE_TIME)
-      for pinNumber in PINOUT.values():
+      for pinNumber in activeNotes:
         self.pi.write(pinNumber, 0)
 
       # Switch the reset GPIO pin from LED to button for a moment.
@@ -142,7 +144,6 @@ class PlayForever(threading.Thread):
 
       if done:
         # Turn off the reset LED.
-        self.pi.set_mode(RESET_PIN, pigpio.OUTPUT)
         self.pi.write(RESET_PIN, 0)
         if channels > 0:
           channels = 0
