@@ -131,7 +131,7 @@ class PlayForever(threading.Thread):
       # If pressed, terminate the tune.
       if resetLed:
         resetLed.close()
-      resetButton = BUTTON(RESET_PIN)
+      resetButton = Button(RESET_PIN)
       if resetButton.is_pressed:
         LOG.write("Tune manually terminated with local reset button.\n")
         done = True
