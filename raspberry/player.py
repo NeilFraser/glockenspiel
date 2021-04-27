@@ -21,6 +21,8 @@ limitations under the License.
 __author__ = "fraser@google.com (Neil Fraser)"
 
 import json
+import signal
+import sys
 import threading
 import time
 import urllib2
@@ -84,10 +86,12 @@ class PlayForever(threading.Thread):
     for midi, pinNumber in PINOUT.items():
       self.outputs[midi] = LED(pinNumber)
       self.outputs[midi].off()
+    signal.signal(signal.SIGINT, self.shutdown)
 
   def run(self):
     global new_data, RESET_PIN
     resetLed = None
+    resetLed = LED(RESET_PIN)
     transcripts = []
     channels = 0
     while(True):
@@ -129,15 +133,15 @@ class PlayForever(threading.Thread):
 
       # Switch the reset GPIO pin from LED to button for a moment.
       # If pressed, terminate the tune.
-      if resetLed:
-        resetLed.close()
-      resetButton = Button(RESET_PIN)
-      if not resetButton.is_pressed:
-        # Note that the button is reversed for some reason.
-        LOG.write("Tune manually terminated with local reset button.\n")
-        done = True
-      resetButton.close()
-      resetLed = LED(RESET_PIN)
+      #if resetLed:
+      #  resetLed.close()
+      #resetButton = Button(RESET_PIN)
+      #if not resetButton.is_pressed:
+      #  # Note that the button is reversed for some reason.
+      #  LOG.write("Tune manually terminated with local reset button.\n")
+      #  done = True
+      #resetButton.close()
+      #resetLed = LED(RESET_PIN)
 
       if done:
         resetLed.off()
@@ -152,6 +156,12 @@ class PlayForever(threading.Thread):
         s = (startTime + clock64ths * tempo) - time.time()
         if (s > 0):
           time.sleep(s)
+
+  def shutdown(sig, frame):
+    LOG.write("Shutting down.\n")
+    for output in self.outputs.values():
+      output.close()
+    sys.exit(0)
 
 
 f = PlayForever()
@@ -173,7 +183,6 @@ def fetch():
       new_data = json.loads(text)
     except ValueError:
       LOG.write("Invalid JSON.\nTrying again.\n")
-
 
 while(True):
   fetch()
