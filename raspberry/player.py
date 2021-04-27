@@ -113,7 +113,7 @@ class PlayForever(threading.Thread):
         # Time of start of execution in seconds.
         startTime = time.time()
         # Turn on the reset LED.
-        self.pi.set_mode(pinNumber, pigpio.OUTPUT)
+        self.pi.set_mode(RESET_PIN, pigpio.OUTPUT)
         self.pi.write(RESET_PIN, 1)
 
       done = True
@@ -138,7 +138,7 @@ class PlayForever(threading.Thread):
       if self.pi.read(RESET_PIN):
         LOG.write("Tune manually terminated with local reset button.\n")
         done = True
-      self.pi.set_mode(pinNumber, pigpio.OUTPUT)
+      self.pi.set_mode(RESET_PIN, pigpio.OUTPUT)
 
       if done:
         # Turn off the reset LED.
