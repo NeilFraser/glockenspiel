@@ -21,13 +21,12 @@ limitations under the License.
 __author__ = "fraser@google.com (Neil Fraser)"
 
 import json
+import pigpio
 import signal
 import sys
 import threading
 import time
 import urllib2
-from gpiozero import LED, Button
-
 
 LOG = open("/home/pi/player.log", "w", 0)
 
@@ -82,15 +81,15 @@ class PlayForever(threading.Thread):
   def __init__(self):
     global PINOUT, RESET_PIN
     threading.Thread.__init__(self)
-    self.outputs = {}
-    for midi, pinNumber in PINOUT.items():
-      self.outputs[midi] = LED(pinNumber, initial_value=False)
+    self.pi = pigpio.pi()
+    for pinNumber in PINOUT.values():
+      self.pi.set_mode(pinNumber, pigpio.OUTPUT)
+      self.pi.write(pinNumber, 0)
+    self.pi.set_mode(RESET_PIN, pigpio.OUTPUT)
     signal.signal(signal.SIGINT, self.shutdown)
 
   def run(self):
-    global new_data, RESET_PIN
-    resetLed = None
-    resetLed = LED(RESET_PIN)
+    global PINOUT, RESET_PIN, new_data
     transcripts = []
     channels = 0
     while(True):
@@ -113,6 +112,9 @@ class PlayForever(threading.Thread):
         clock64ths = 0
         # Time of start of execution in seconds.
         startTime = time.time()
+        # Turn on the reset LED.
+        self.pi.set_mode(pinNumber, pigpio.OUTPUT)
+        self.pi.write(RESET_PIN, 1)
 
       done = True
       for i in xrange(channels):
@@ -121,46 +123,46 @@ class PlayForever(threading.Thread):
           done = False
           if pauseUntil64ths[i] <= clock64ths:
             (note, duration) = transcript[pointers[i]]
-            if self.outputs.has_key(note):
-              self.outputs[note].on()
+            if PINOUT.has_key(note):
+              self.pi.write(PINOUT[note], 1)
             pauseUntil64ths[i] = duration * 64 + clock64ths
             pointers[i] += 1
 
       time.sleep(STRIKE_TIME)
-      for note in self.outputs.keys():
-        self.outputs[note].off()
+      for pinNumber in PINOUT.values():
+        self.pi.write(pinNumber, 0)
 
       # Switch the reset GPIO pin from LED to button for a moment.
       # If pressed, terminate the tune.
-      #if resetLed:
-      #  resetLed.close()
-      #resetButton = Button(RESET_PIN)
-      #if not resetButton.is_pressed:
-      #  # Note that the button is reversed for some reason.
-      #  LOG.write("Tune manually terminated with local reset button.\n")
-      #  done = True
-      #resetButton.close()
-      #resetLed = LED(RESET_PIN)
+      self.pi.set_mode(RESET_PIN, pigpio.INPUT)
+      if self.pi.read(RESET_PIN):
+        LOG.write("Tune manually terminated with local reset button.\n")
+        done = True
+      self.pi.set_mode(pinNumber, pigpio.OUTPUT)
 
       if done:
-        resetLed.off()
+        # Turn off the reset LED.
+        self.pi.set_mode(RESET_PIN, pigpio.OUTPUT)
+        self.pi.write(RESET_PIN, 0)
         if channels > 0:
           channels = 0
           LOG.write("Finished playing tune.  Waiting for next tune.\n")
         time.sleep(1)
       else:
-        # Turn on the reset LED.
-        resetLed.on()
         clock64ths += 1
         s = (startTime + clock64ths * tempo) - time.time()
         if (s > 0):
           time.sleep(s)
 
   def shutdown(self, sig, frame):
+    global PINOUT, RESET_PIN
     # Gracefully shutdown without spewing traceback.
+    # Turn off any powered solenoids.
     LOG.write("Shutting down.\n")
-    for output in self.outputs.values():
-      output.close()
+    for pinNumber in PINOUT.values():
+      self.pi.write(pinNumber, 0)
+    self.pi.set_mode(RESET_PIN, pigpio.OUTPUT)
+    self.pi.write(RESET_PIN, 0)
     sys.exit(0)
 
 f = PlayForever()
