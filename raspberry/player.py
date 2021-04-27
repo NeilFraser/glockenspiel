@@ -35,6 +35,38 @@ SOURCE = "https://glockenspiel.appspot.com/fetch"
 # Strike time for hammer in seconds.
 STRIKE_TIME = 10 / 1000.0
 
+# Map of MIDI note values to GPIO pin number.
+PINOUT = {
+  81:  24,  # A5
+  82:  15,  # Bb5
+  83:  10,  # B5
+  84:  9,   # C6
+  85:  14,  # Db6
+  86:  25,  # D6
+  87:  4,   # Eb6
+  88:  11,  # E6
+  89:  8,   # F6
+  90:  3,   # Gb6
+  91:  7,   # G6
+  92:  2,   # Ab6
+  93:  5,   # A6
+  94:  23,  # Bb6
+  95:  6,   # B6
+  96:  12,  # C7
+  97:  22,  # Db7
+  98:  13,  # D7
+  99:  27,  # Eb7
+  100: 19,  # E7
+  101: 16,  # F7
+  102: 17,  # Gb7
+  103: 26,  # G7
+  104: 18,  # Ab7
+  105: 20   # A7
+}
+
+# GPIO pin number of reset button.
+RESET_PIN = 21
+
 # Global variable used to pass parsed JSON from the fetch loop
 # to the play thread.
 new_data = None
@@ -46,16 +78,16 @@ class PlayForever(threading.Thread):
   Runs in a separate thread.
   """
   def __init__(self):
+    global PINOUT, RESET_PIN
     threading.Thread.__init__(self)
     self.outputs = {}
-    pinNumber = 2
-    for note in xrange(81, 106):
-      self.outputs[note] = LED(pinNumber)
-      self.outputs[note].off()
-      pinNumber += 1
+    for midi, pinNumber in PINOUT.items():
+      self.outputs[midi] = LED(pinNumber)
+      self.outputs[midi].off()
+    LED(RESET_PIN).off()
 
   def run(self):
-    global new_data
+    global new_data, RESET_PIN
     transcripts = []
     channels = 0
     while(True):
@@ -78,6 +110,8 @@ class PlayForever(threading.Thread):
         clock64ths = 0
         # Time of start of execution in seconds.
         startTime = time.time()
+        # Turn on the reset LED.
+        LED(RESET_PIN).on()
 
       done = True
       for i in xrange(channels):
@@ -98,6 +132,8 @@ class PlayForever(threading.Thread):
       if done:
         if channels > 0:
           channels = 0
+          # Turn off the reset LED.
+          LED(RESET_PIN).off()
           LOG.write("Finished playing tune.  Waiting for next tune.\n")
         time.sleep(1)
       else:
