@@ -97,14 +97,12 @@ class PlayForever(threading.Thread):
         dataIsGood = True
         try:
           new_tempo = new_data[0] / 1000.0
+          assert 5 < new_tempo < 50
           new_transcripts = new_data[1:]
+          assert len(new_transcripts) > 0
         except:
           dataIsGood = False
         new_data = None
-        if new_tempo < 5 or new_tempo > 50:
-          dataIsGood = False
-        if len(new_transcripts) == 0:
-          dataIsGood = False
         if dataIsGood:
           LOG.write("Got new tune: %s\n" % transcripts)
           tempo = new_tempo
@@ -136,12 +134,22 @@ class PlayForever(threading.Thread):
         if pointers[i] < len(transcript):
           done = False
           if pauseUntil64ths[i] <= clock64ths:
-            (note, duration) = transcript[pointers[i]]
-            if PINOUT.has_key(note):
-              self.pi.write(PINOUT[note], 1)
-              activeNotes.append(PINOUT[note])
-            pauseUntil64ths[i] = duration * 64 + clock64ths
-            pointers[i] += 1
+            dataIsGood = True
+            try:
+              (note, duration) = transcript[pointers[i]]
+              note = int(note)
+              duration = float(duration)
+            except:
+              # Tuple is invalid.  Drop this channel.
+              dataIsGood = False
+              LOG.write("Got invalid tuple: %s\n" % transcript[pointers[i])
+              transcripts[i] = []
+            if dataIsGood:
+              if PINOUT.has_key(note):
+                self.pi.write(PINOUT[note], 1)
+                activeNotes.append(PINOUT[note])
+              pauseUntil64ths[i] = duration * 64 + clock64ths
+              pointers[i] += 1
 
       time.sleep(STRIKE_TIME)
       for pinNumber in activeNotes:
