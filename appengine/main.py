@@ -15,6 +15,8 @@ limitations under the License.
 """
 
 import cgi
+import expiration
+import storage
 from google.cloud import ndb
 
 
@@ -31,6 +33,10 @@ def app(environ, start_response):
     return submit(environ, start_response)
   if environ["PATH_INFO"] == "/fetch":
     return fetch(environ, start_response)
+  if environ["PATH_INFO"] == "/storage":
+    return storage.app(environ, start_response)
+  if environ["PATH_INFO"] == "/expiration":
+    return expiration.app(environ, start_response)
   start_response("404 Not Found", [])
   return [b"Page not found."]
 

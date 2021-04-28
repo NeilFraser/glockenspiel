@@ -208,8 +208,7 @@ Music.init = function() {
   session['setUseSoftTabs'](true);
   session['setUseWrapMode'](true);
   session['on']('change', Music.editorChanged);
-  var defaultCode = 'play(7);';
-  editor['setValue'](defaultCode, -1);
+  editor['setValue']('', -1);
 
   // Inject Blockly
   var toolbox = document.getElementById('toolbox');
@@ -226,6 +225,7 @@ Music.init = function() {
           'startScale': 1.0}});
   Music.workspace.addChangeListener(Blockly.Events.disableOrphans);
   Music.workspace.addChangeListener(Music.disableExtraStarts);
+  Music.workspace.addChangeListener(Music.codeChanged);
   // Prevent collisions with user-defined functions or variables.
   Blockly.JavaScript.addReservedWords('play,rest,' +
       'start0,start1,start2,start3,start4,start5,start6,start7,start8,start9');
@@ -239,11 +239,17 @@ Music.init = function() {
   var sliderSvg = document.getElementById('slider');
   Music.speedSlider = new Slider(10, 35, 130, sliderSvg, Music.sliderChange);
 
-  var xml = document.getElementById('defaultXml');
-  // Clear the workspace to avoid merge.
-  Music.workspace.clear();
-  Blockly.Xml.domToWorkspace(xml, Music.workspace);
-  Music.workspace.clearUndo();
+  if (window.location.hash.length > 1) {
+    // An href with #key triggers an AJAX call to retrieve saved blocks.
+    BlocklyStorage.retrieveXml(window.location.hash.substring(1));
+  } else {
+    var xml = document.getElementById('defaultXml');
+    // Clear the workspace to avoid merge.
+    Music.workspace.clear();
+    Blockly.Xml.domToWorkspace(xml, Music.workspace);
+    Music.workspace.clearUndo();
+    setTimeout(Music.showHelp, 1000);
+  }
 
   Music.reset();
   Music.changeTab(0);
@@ -260,8 +266,8 @@ Music.init = function() {
   // Lazy-load the sounds.
   setTimeout(Music.importSounds, 3);
 
+  Music.bindClick(linkButton, BlocklyStorage.link);
   Music.bindClick('helpButton', Music.showHelp);
-  setTimeout(Music.showHelp, 1000);
 };
 
 window.addEventListener('load', Music.init);
@@ -343,6 +349,7 @@ Music.editorChanged = function() {
       Blockly.utils.dom.addClass(Music.editorTabs[0], 'tab-disabled');
       Music.blocksEnabled_ = false;
       Music.startCount = 0;
+      Music.codeChanged();
     } else {
       // Abort change, preserve link.
       var code = Music.blocksToCode();
@@ -358,6 +365,19 @@ Music.editorChanged = function() {
       Blockly.utils.dom.removeClass(Music.editorTabs[0], 'tab-disabled');
       Music.blocksEnabled_ = true;
     }
+    Music.codeChanged();
+  }
+};
+
+/**
+ * Monitor the block or JS editor.  If a change is made that changes the code,
+ * clear the key from the URL.
+ */
+Music.codeChanged = function() {
+  if (BlocklyStorage.startCode !== null &&
+      BlocklyStorage.startCode !== Music.getCode()) {
+    window.location.hash = '';
+    BlocklyStorage.startCode = null;
   }
 };
 
@@ -663,7 +683,7 @@ Music.drawNote.heights_ = {};
  * Show the help pop-up.
  */
 Music.showHelp = function() {
-  var help = document.getElementById('help');
+  var help = document.getElementById('dialogHelp');
   var button = document.getElementById('helpButton');
   var style = {
     width: '50%',
@@ -865,6 +885,60 @@ Music.initInterpreter_ = function(interpreter, globalObject) {
   };
   interpreter.setProperty(globalObject, 'runThread',
       interpreter.createNativeFunction(wrapper));
+};
+
+/**
+ * Get the user's code (XML or JS) from the editor (Blockly or ACE).
+ * @return {string} XML or JS code.
+ */
+Music.getCode = function() {
+  if (Music.blocksEnabled_) {
+    // Blockly editor.
+    var xml = Blockly.Xml.workspaceToDom(Music.workspace, true);
+    // Remove x/y coordinates from XML if there's only one block stack.
+    // There's no reason to store this, removing it helps with anonymity.
+    if (Music.workspace.getTopBlocks(false).length == 1 &&
+        xml.querySelector) {
+      var block = xml.querySelector('block');
+      if (block) {
+        block.removeAttribute('x');
+        block.removeAttribute('y');
+      }
+    }
+    return Blockly.Xml.domToText(xml);
+  } else {
+    // Text editor.
+    return Music.editor['getValue']();
+  }
+};
+
+/**
+ * Set the given code (XML or JS) to the editor (Blockly or ACE).
+ * @param {string} code XML or JS code.
+ */
+Music.setCode = function(code) {
+  try {
+    var xml = Blockly.Xml.textToDom(code);
+  } catch (e) {
+    xml = null;
+  }
+  if (xml) {
+    // Blockly editor.
+    // Clear the workspace to avoid merge.
+    Music.workspace.clear();
+    Blockly.Xml.domToWorkspace(xml, Music.workspace);
+    Music.workspace.clearUndo();
+    Blockly.utils.dom.removeClass(Music.editorTabs[0], 'tab-disabled');
+    Music.blocksEnabled_ = true;
+    Music.editorTabs[0].dispatchEvent(new Event('click'));
+  } else {
+    // Text editor.
+    Music.editor['setValue'](code, -1);
+    Blockly.utils.dom.addClass(Music.editorTabs[0], 'tab-disabled');
+    Music.blocksEnabled_ = false;
+    Music.startCount = 0;
+    Music.editorTabs[1].dispatchEvent(new Event('click'));
+  }
 };
 
 /**
@@ -1161,19 +1235,18 @@ Music.submitButtonClick = function(e) {
   if (Music.eventSpam(e)) {
     return;
   }
-  if (location.protocol == 'file:') {
-    alert('Cannot submit XHR from "file:" URL.');
+  var submitButton = document.getElementById('submitButton');
+  if (location.protocol === 'file:') {
+    MusicDialogs.storageAlert(submitButton, 'Cannot submit XHR from "file:" URL.');
     return;
   }
   var xhr = new XMLHttpRequest();
   xhr.open('POST', '/submit');
   xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
   xhr.onload = function() {
-    if (xhr.readyState == 4) {
-      var text = (xhr.status == 200) ? xhr.responseText :
-          'XHR error.\nStatus: ' + xhr.status;
-      alert(text);
-    }
+    var text = (xhr.status === 200) ? xhr.responseText :
+        'XHR error.\nStatus: ' + xhr.status;
+    MusicDialogs.storageAlert(submitButton, text);
   };
   xhr.send('data=' + JSON.stringify(Music.transcript));
 };

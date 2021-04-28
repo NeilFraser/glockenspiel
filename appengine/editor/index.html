@@ -2,6 +2,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="Program music using either blocks or JavaScript.">
     <link rel="icon" type="image/png" href="favicon32.png" sizes="32x32">
     <title>Blockly Glockenspiel</title>
     <link rel="stylesheet" href="style.css">
@@ -15,6 +16,7 @@
     <script src="field_pitch.js"></script>
     <script src="blocks.js"></script>
     <script src="dialogs.js"></script>
+    <script src="storage.js"></script>
     <script src="script.js"></script>
   </head>
   <body>
@@ -25,6 +27,7 @@
             <h1>Blockly Glockenspiel</h1>
           </td>
           <td class="farSide">
+            <button id="linkButton" title="Save your program and generate sharable link."><img src="1x1.gif" class="link icon21"></button>
             <button id="helpButton">Help</button>
           </td>
         </tr>
@@ -50,13 +53,13 @@
             <clipPath id="slowClipPath">
               <rect width=26 height=12 x=5 y=14 />
             </clipPath>
-            <image xlink:href="icons.png" height=42 width=63 x=-21 y=-10
+            <image xlink:href="icons.png" height=42 width=84 x=-21 y=-10
                 clip-path="url(#slowClipPath)" />
             <!-- Fast icon. -->
             <clipPath id="fastClipPath">
               <rect width=26 height=16 x=120 y=10 />
             </clipPath>
-            <image xlink:href="icons.png" height=42 width=63 x=120 y=-11
+            <image xlink:href="icons.png" height=42 width=84 x=120 y=-11
                 clip-path="url(#fastClipPath)" />
           </svg>
         </td>
@@ -319,7 +322,7 @@
     <div id="dialogShadow" class="dialogAnimate"></div>
     <div id="dialogBorder"></div>
     <div id="dialog"></div>
-    <div id="help" class="dialogHiddenContent">
+    <div id="dialogHelp" class="dialogHiddenContent">
       <div style="padding-bottom: 0.7ex">
         <ol>
           <li>Compose a tune using either Blockly or JavaScript.</li>
@@ -328,6 +331,10 @@
         </ol>
         <p><a href="docs.html" target="_blank">API Documentation <img src="link.png" height=10 width=10></a></p>
       </div>
+      <div class="farSide" style="padding: 1ex 3ex 0"><button class="secondary" onclick="MusicDialogs.hideDialog(true)">OK</button></div>
+    </div>
+    <div id="dialogStorage" class="dialogHiddenContent">
+      <div id="containerStorage"></div>
       <div class="farSide" style="padding: 1ex 3ex 0"><button class="secondary" onclick="MusicDialogs.hideDialog(true)">OK</button></div>
     </div>
   </body>

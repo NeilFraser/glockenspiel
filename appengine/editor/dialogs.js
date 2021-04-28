@@ -274,6 +274,32 @@ MusicDialogs.getBBox_ = function(element) {
 };
 
 /**
+ * Display a storage-related modal dialog.
+ * @param {?Element} origin Source of dialog opening animation.
+ * @param {string} message Text to alert.
+ */
+MusicDialogs.storageAlert = function(origin, message) {
+  var container = document.getElementById('containerStorage');
+  container.textContent = '';
+  var lines = message.split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    var p = document.createElement('p');
+    p.appendChild(document.createTextNode(lines[i]));
+    container.appendChild(p);
+  }
+
+  var content = document.getElementById('dialogStorage');
+  var style = {
+    width: '50%',
+    left: '25%',
+    top: '5em'
+  };
+  MusicDialogs.showDialog(content, origin, true, true, style,
+      MusicDialogs.stopDialogKeyDown);
+  MusicDialogs.startDialogKeyDown();
+};
+
+/**
  * If the user preses enter, escape, or space, hide the dialog.
  * @param {!Event} e Keyboard event.
  * @private
