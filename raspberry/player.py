@@ -177,7 +177,7 @@ def fetch():
   try:
     response = urllib2.urlopen(SOURCE)
   except Exception as e:
-    LOG.write("Failure to fetch: %s\nTrying again.")
+    LOG.write("Failure to fetch: %s\nTrying again.\n" % e)
     return
   text = response.read()
   if text.strip():
