@@ -94,27 +94,40 @@ class PlayForever(threading.Thread):
     channels = 0
     while(True):
       if new_data:
-        tempo = new_data[0] / 1000.0
-        transcripts = new_data[1:]
+        dataIsGood = True
+        try:
+          new_tempo = new_data[0] / 1000.0
+          new_transcripts = new_data[1:]
+        except:
+          dataIsGood = False
         new_data = None
-        LOG.write("Got new tune: %s\n" % transcripts)
+        if new_tempo < 5 or new_tempo > 50:
+          dataIsGood = False
+        if len(new_transcripts) == 0:
+          dataIsGood = False
+        if dataIsGood:
+          LOG.write("Got new tune: %s\n" % transcripts)
+          tempo = new_tempo
+          transcripts = new_transcripts
 
-        # Insert a pause between the old tune and the new one.
-        time.sleep(1)
+          # Insert a pause between the old tune and the new one.
+          time.sleep(1)
 
-        # Number of channels
-        channels = len(transcripts)
-        # Channel pointers
-        pointers = [0] * channels
-        # Channel clocks
-        pauseUntil64ths = [0] * channels
-        # Number of 1/64ths notes since the start.
-        clock64ths = 0
-        # Time of start of execution in seconds.
-        startTime = time.time()
-        # Turn on the reset LED.
-        self.pi.set_mode(RESET_PIN, pigpio.OUTPUT)
-        self.pi.write(RESET_PIN, 1)
+          # Number of channels
+          channels = len(transcripts)
+          # Channel pointers
+          pointers = [0] * channels
+          # Channel clocks
+          pauseUntil64ths = [0] * channels
+          # Number of 1/64ths notes since the start.
+          clock64ths = 0
+          # Time of start of execution in seconds.
+          startTime = time.time()
+          # Turn on the reset LED.
+          self.pi.set_mode(RESET_PIN, pigpio.OUTPUT)
+          self.pi.write(RESET_PIN, 1)
+        else:
+          LOG.write("Got invalid tune: %s\n" % transcripts)
 
       done = True
       activeNotes = []
