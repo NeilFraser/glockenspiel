@@ -104,7 +104,7 @@ class PlayForever(threading.Thread):
           dataIsGood = False
         new_data = None
         if dataIsGood:
-          LOG.write("Got new tune: %s\n" % transcripts)
+          LOG.write("Got new tune: %s\n" % new_transcripts)
           tempo = new_tempo_ms / 1000.0
           transcripts = new_transcripts
 
