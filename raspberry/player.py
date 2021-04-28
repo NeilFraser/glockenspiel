@@ -96,8 +96,8 @@ class PlayForever(threading.Thread):
       if new_data:
         dataIsGood = True
         try:
-          new_tempo = new_data[0] / 1000.0
-          assert 5 < new_tempo < 50
+          new_tempo_ms = float(new_data[0])
+          assert 5 < new_tempo_ms < 50
           new_transcripts = new_data[1:]
           assert len(new_transcripts) > 0
         except:
@@ -105,7 +105,7 @@ class PlayForever(threading.Thread):
         new_data = None
         if dataIsGood:
           LOG.write("Got new tune: %s\n" % transcripts)
-          tempo = new_tempo
+          tempo = new_tempo_ms / 1000.0
           transcripts = new_transcripts
 
           # Insert a pause between the old tune and the new one.
@@ -142,7 +142,7 @@ class PlayForever(threading.Thread):
             except:
               # Tuple is invalid.  Drop this channel.
               dataIsGood = False
-              LOG.write("Got invalid tuple: %s\n" % transcript[pointers[i])
+              LOG.write("Got invalid tuple: %s\n" % transcript[pointers[i]])
               transcripts[i] = []
             if dataIsGood:
               if PINOUT.has_key(note):
