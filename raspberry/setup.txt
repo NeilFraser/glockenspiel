@@ -1,0 +1,9 @@
+To prevent some GPIO pins going high on boot, add this line to /boot/config.txt:
+  gpio=2-27=op,dl
+
+To start the player automatically, add these lines to /etc/rc.local:
+  sudo pigpiod
+  /usr/bin/python /home/pi/player.py
+
+Start the Westminster Quarters with this:
+  crontab crontab.txt
