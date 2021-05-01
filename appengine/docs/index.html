@@ -1,0 +1,92 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/png" href="favicon32.png" sizes="32x32">
+    <title>Blockly Glockenspiel: Documentation</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <h1>Blockly Glockenspiel: API Documentation</h1>
+
+    <p>The glockenspiel has 25 notes, just over two octaves.  Here are the available notes and
+ their standard numeric MIDI values:</p>
+
+    <table id="notes">
+      <tr><td>A<sub>5</sub></td><td>81</td></tr>
+      <tr><td class="black">A♯<sub>5</sub>/B♭<sub>5</sub></td><td>82</td></tr>
+      <tr class="white"><td>B<sub>5</sub></td><td>83</td></tr>
+      <tr class="white"><td>C<sub>6</sub></td><td>84</td></tr>
+      <tr><td class="black">C♯<sub>6</sub>/D♭<sub>6</sub></td><td>85</td></tr>
+      <tr><td>D<sub>6</sub></td><td>86</td></tr>
+      <tr><td class="black">D♯<sub>6</sub>/E♭<sub>6</sub></td><td>87</td></tr>
+      <tr><td>E<sub>6</sub></td><td>88</td></tr>
+      <tr><td>F<sub>6</sub></td><td>89</td></tr>
+      <tr><td class="black">F♯<sub>6</sub>/G♭<sub>6</sub></td><td>90</td></tr>
+      <tr><td>G<sub>6</sub></td><td>91</td></tr>
+      <tr><td class="black">G♯<sub>6</sub>/A♭<sub>6</sub></td><td>92</td></tr>
+      <tr><td>A<sub>6</sub></td><td>93</td></tr>
+      <tr><td class="black">A♯<sub>6</sub>/B♭<sub>6</sub></td><td>94</td></tr>
+      <tr><td>B<sub>6</sub></td><td>95</td></tr>
+      <tr><td>C<sub>7</sub></td><td>96</td></tr>
+      <tr><td class="black">C♯<sub>7</sub>/D♭<sub>7</sub></td><td>97</td></tr>
+      <tr><td>D<sub>7</sub></td><td>98</td></tr>
+      <tr><td class="black">D♯<sub>7</sub>/E♭<sub>7</sub></td><td>99</td></tr>
+      <tr><td>E<sub>7</sub></td><td>100</td></tr>
+      <tr><td>F<sub>7</sub></td><td>101</td></tr>
+      <tr><td class="black">F♯<sub>7</sub>/G♭<sub>7</sub></td><td>102</td></tr>
+      <tr><td>G<sub>7</sub></td><td>103</td></tr>
+      <tr><td class="black">G♯<sub>7</sub>/A♭<sub>7</sub></td><td>104</td></tr>
+      <tr><td>A<sub>7</sub></td><td>105</td></tr>
+    </table>
+
+    <p>There are three different ways to compose music for the glockenspiel:</p>
+    <ul>
+    <li>Blockly offers an easy graphical programming experience.</li>
+    <li>JavaScript offers more advanced capabilities.</li>
+    <li>Network access allows one to bypass the front-end and use your own platform.</li>
+    </ul>
+
+    <h2>Blockly</h2>
+    <p>There are five options for the length of each note.  From top to bottom, they are whole notes, half notes, quarter notes
+    (the default), eighth notes, and sixteenth notes.</p>
+
+    <p><img src="note-lengths.png"></p>
+
+    <p>A note's pitch can be changed by either typing its name ('A5' - 'A7') or by choosing the note value on a staff.
+    Note that this UI only allows for the selection of the 15 natural pitches (not sharps or flats).</p>
+
+    <p><img src="note-pitch.png"></p>
+
+    <p>Alternatively, the pitch block can be replaced by a number block which specifies MIDI value (81-105) of the pitch.
+    The following example shows two quarter notes of the same pitch being played back to back.</p>
+
+    <p><img src="note-midi.png"></p>
+
+    <p>In order to play a sharp or flat pitch, one can increment or decrement a pitch block, or specify the pitch's MIDI
+    value directly.  The following example shows three C♯6 or D♭6 quarter notes played in a row.</p>
+
+    <p><img src="sharp-flat.png"></p>
+
+    <p>A pause in the music is called a rest.  Rests come in the same lengths as notes.  From top to bottom,
+    they are whole rests, half rests, quarter rests (the default), eighth rests, and sixteenth rests.</p>
+
+    <p><img src="rest-lengths.png"></p>
+
+    <p>Use a "when ▶ clicked" event handler to start code executing.  One can create up to four of these handlers,
+    allowing for multiple simultaneous threads.  Below is a two-threaded program that plays the same four-note tune as a round.</p>
+
+    <p><img src="starts.png"></p>
+
+    <h2>JavaScript</h2>
+
+    <p>Any program built with Blockly can be seen in its JavaScript form.  However, once one edits the JavaScript,
+    it is not possible to go back to Blockly, except by either deleting the entire program.</p>
+
+
+    <h2>Network</h2>
+    <p>TODO: Neil</p>
+
+    <p>(Seriously, what did you expect?)</p>
+  </body>
+</html>

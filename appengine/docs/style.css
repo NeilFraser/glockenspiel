@@ -1,0 +1,38 @@
+body {
+  background-color: #fff;
+  font-family: sans-serif;
+  margin: 2em;
+}
+h1 {
+  font-size: 150%;
+  font-weight: normal;
+}
+h2 {
+  font-size: 140%;
+  font-weight: normal;
+  border-bottom: 2px dotted #8c8;
+}
+a:hover {
+  color: #f00;
+}
+
+#notes {
+  border-collapse: collapse;
+  margin-left: 275px;
+  margin-top: -200px;
+  margin-bottom: -200px;
+  transform: rotate(270deg);
+}
+#notes td {
+  border: 1px solid #888;
+}
+#notes td.black {
+  background-color: #000;
+  color: #fff;
+  padding-left: 1em;
+  text-align: right;
+}
+#notes td:last-child {
+  padding: 0 1ex;
+  text-align: right;
+}
