@@ -18,6 +18,7 @@ limitations under the License.
 """Compose the Westminster Quarters for the current time, and send to App Engine.
 """
 
+import json
 import requests
 from datetime import datetime
 
@@ -56,11 +57,10 @@ elif quarter == 3:
   notes = group4 + group5 + group1
 elif quarter == 4:
   notes = group2 + group3 + group4 + group5
-  notes.append([-1,1])
+  notes.append([-1, 1])
   for i in range(hour):
-    notes.append([88,1])
+    notes.append([88, 1])
 
-# JSON not needed for lists of numbers.
-data = str([TEMPO, notes])
+data = json.dumps({'tempo': TEMPO, 'voices': [notes]})
 x = requests.post(URL, data = {'data': data})
 print(x.text)

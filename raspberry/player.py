@@ -96,9 +96,13 @@ class PlayForever(threading.Thread):
       if new_data:
         dataIsGood = True
         try:
-          new_tempo_ms = float(new_data[0])
+          if 'tempo' in new_data:
+            new_tempo_ms = float(new_data['tempo'])
+          else:
+            new_tempo_ms = 23.4375  # Default speed.
           assert 5 < new_tempo_ms < 50
-          new_transcripts = new_data[1:]
+          new_transcripts = new_data['voices']
+          assert type(new_transcripts) == list
           assert len(new_transcripts) > 0
         except:
           dataIsGood = False

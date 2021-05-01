@@ -91,11 +91,11 @@ Music.blocksEnabled_ = true;
 Music.ignoreEditorChanges_ = true;
 
 /**
- * Array of staves.  Each stave is an array of [pitch, duration] tuples.
- * The first element is the tune's tempo.
- * @type {number|!Array.<!Array.<!Array.<number>>>}
+ * Object containing a record of the last play.
+ * Each voice is an array of [pitch, duration] tuples.
+ * @type !Object
  */
-Music.transcript = [0];
+Music.transcript = {tempo: NaN, voices: []};
 
 /**
  * Number of created Threads.  Always incrementing during execution,
@@ -487,15 +487,15 @@ Music.drawStaveBox = function() {
   musicContainer.appendChild(img);
 
   // Draw empty staves.
-  var count = Music.transcript.length > 1 ? Music.transcript.length - 1 :
-      Music.startCount;
+  var count = Music.transcript.voices.length > 0 ?
+      Music.transcript.voices.length : Music.startCount;
   Music.drawStave(Blockly.utils.math.clamp(count, 1, 4));
 
   // Repopulate the music from the transcripts.
-  for (var i = 1; i < Math.min(5, Music.transcript.length); i++) {
+  for (var i = 0; i < Math.min(4, Music.transcript.voices.length); i++) {
     var clock64 = 0;
-    for (var j = 0, tuple; (tuple = Music.transcript[i][j]); j++) {
-      Music.drawNote(i, clock64, tuple[0], tuple[1]);
+    for (var j = 0, tuple; (tuple = Music.transcript.voices[i][j]); j++) {
+      Music.drawNote(i + 1, clock64, tuple[0], tuple[1]);
       clock64 += tuple[1] * 64;
     }
   }
@@ -786,7 +786,7 @@ Music.reset = function() {
   Music.threadCount = 0;
   Music.clock64ths = 0;
   Music.startTime = 0;
-  Music.transcript.length = 0;
+  Music.transcript.voices.length = 0;
 
   Music.drawStaveBox();
 };
@@ -1027,8 +1027,8 @@ Music.tick = function() {
     Music.workspace.highlightBlock(null);
     // Playback complete; allow the user to submit this music to glockenspiel.
     document.getElementById('submitButton').removeAttribute('disabled');
-    // Store the tempo in the first position of the transcript.
-    Music.transcript[0] = Music.getTempo();
+    // Store the tempo in the transcript.
+    Music.transcript.tempo = Music.getTempo();
   }
 };
 
@@ -1286,14 +1286,14 @@ Music.Thread.prototype.appendTranscript = function(pitch, duration) {
     }
     this.stave = i;
     // Create a new transcript stave if this stave is not recycled.
-    if (!Music.transcript[i]) {
-      Music.transcript[i] = [];
+    if (!Music.transcript.voices[i - 1]) {
+      Music.transcript.voices[i - 1] = [];
     }
     // Compute length of existing content in this transcript stave.
     var existingDuration = 0;
-    var transcript = Music.transcript[i];
-    for (var i = 0; i < transcript.length; i++) {
-      existingDuration += transcript[i][1];
+    var transcript = Music.transcript.voices[i - 1];
+    for (var j = 0; j < transcript.length; j++) {
+      existingDuration += transcript[j][1];
     }
     // Add pause to line up this transcript stave with the clock.
     var deltaDuration = Music.clock64ths / 64 - existingDuration;
@@ -1304,7 +1304,7 @@ Music.Thread.prototype.appendTranscript = function(pitch, duration) {
     // Redraw the visualization with the new number of staves.
     Music.drawStaveBox();
   }
-  Music.transcript[this.stave].push([pitch, duration]);
+  Music.transcript.voices[this.stave - 1].push([pitch, duration]);
 };
 
 
