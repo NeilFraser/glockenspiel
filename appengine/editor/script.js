@@ -55,10 +55,10 @@ Music.threads = [];
 Music.startTime = 0;
 
 /**
- * Number of 1/64ths notes since the start.
+ * Number of 1/32nds notes since the start.
  * @type {number}
  */
-Music.clock64ths = 0;
+Music.clock32nds = 0;
 
 /**
  * Currently executing thread.
@@ -145,7 +145,7 @@ Music.init = function() {
         return;
       }
       for (var i = 0; i < Music.editorTabs.length; i++) {
-        if (selectedIndex == i) {
+        if (selectedIndex === i) {
           Blockly.utils.dom.addClass(Music.editorTabs[i], 'tab-selected');
         } else {
           Blockly.utils.dom.removeClass(Music.editorTabs[i], 'tab-selected');
@@ -283,15 +283,16 @@ Music.changeTab = function(index) {
   var names = ['blockly', 'editor'];
   for (var i = 0, name; (name = names[i]); i++) {
     var div = document.getElementById(name);
-    div.style.visibility = (i == index) ? 'visible' : 'hidden';
+    div.style.visibility = (i === index) ? 'visible' : 'hidden';
   }
   // Show/hide Blockly divs.
   var names = ['.blocklyTooltipDiv', '.blocklyToolboxDiv'];
   for (var i = 0, name; (name = names[i]); i++) {
     var div = document.querySelector(name);
-    div.style.visibility = (index == BLOCKS) ? 'visible' : 'hidden';
+    div.style.visibility = (index === BLOCKS) ? 'visible' : 'hidden';
   }
-  if (index == JAVASCRIPT && Music.blocksEnabled_) {
+  Blockly.hideChaff();
+  if (index === JAVASCRIPT && Music.blocksEnabled_) {
     // Remove keywords not supported by the JS-Interpreter.
     var keywords = Music.editor['getSession']()['getMode']()['$highlightRules']['$keywordList'];
     if (keywords) {
@@ -391,7 +392,7 @@ Music.bindClick = function(el, func) {
   if (!el) {
     throw TypeError('Element not found: ' + el);
   }
-  if (typeof el == 'string') {
+  if (typeof el === 'string') {
     el = document.getElementById(el);
   }
   el.addEventListener('click', func, true);
@@ -453,7 +454,7 @@ Music.importBabel = function() {
  * @throws SyntaxError if code is unparsable.
  */
 Music.transpileToEs5 = function(code) {
-  if (typeof Babel != 'object') {
+  if (typeof Babel !== 'object') {
     return undefined;
   }
   var options = {
@@ -493,10 +494,10 @@ Music.drawStaveBox = function() {
 
   // Repopulate the music from the transcripts.
   for (var i = 0; i < Math.min(4, Music.transcript.voices.length); i++) {
-    var clock64 = 0;
+    var clock32 = 0;
     for (var j = 0, tuple; (tuple = Music.transcript.voices[i][j]); j++) {
-      Music.drawNote(i + 1, clock64, tuple[0], tuple[1]);
-      clock64 += tuple[1] * 64;
+      Music.drawNote(i + 1, clock32, tuple[0], tuple[1]);
+      clock32 += tuple[1] * 32;
     }
   }
 };
@@ -544,22 +545,22 @@ Music.staveTop_ = function(i, n) {
 /**
  * Draw and position the specified note or rest.
  * @param {number} stave Which stave bar to draw on (base 1).
- * @param {number} clock64 Distance down the stave (on the scale of 1/64 notes).
+ * @param {number} clock32 Distance down the stave (on the scale of 1/32 notes).
  * @param {number} pitch MIDI value of note (81-105), or rest (Music.REST).
  * @param {number} duration Duration of note or rest (1, 0.5, 0.25...).
  */
-Music.drawNote = function(stave, clock64, pitch, duration) {
+Music.drawNote = function(stave, clock32, pitch, duration) {
   // Split notes/rests with odd durations into legal quanta.
   var legalDurations = [1, 0.5, 0.25, 0.125, 0.0625, 0.03125];
   for (var i = 0; i < legalDurations.length; i++) {
     var legalDuration = legalDurations[i];
-    if (duration == legalDuration) {
+    if (duration === legalDuration) {
       break;  // Valid note.
     }
     while (duration > legalDuration) {
-      Music.drawNote(stave, clock64, pitch, legalDuration);
+      Music.drawNote(stave, clock32, pitch, legalDuration);
       pitch = Music.REST;  // Subsequent duration is a pause.
-      clock64 += legalDuration * 64;
+      clock32 += legalDuration * 32;
       duration -= legalDuration;
     }
   }
@@ -567,10 +568,10 @@ Music.drawNote = function(stave, clock64, pitch, duration) {
     return;  // Too small to display.
   }
 
-  var time = clock64 / 64;
+  var time = clock32 / 32;
   var top = Music.staveTop_(stave, Music.staveCount);
   var ledgerTop = top;
-  if (pitch == Music.REST) {
+  if (pitch === Music.REST) {
     top += 21;
     top = Math.round(top);
   } else {
@@ -585,16 +586,16 @@ Music.drawNote = function(stave, clock64, pitch, duration) {
   var musicContainer = document.getElementById('musicContainer');
   var img = document.createElement('img');
   var flip = '';
-  if (pitch != Music.REST) {
-    flip = (duration == 1 || pitch < 94) ? '-low' : '-high';
+  if (pitch !== Music.REST) {
+    flip = (duration === 1 || pitch < 94) ? '-low' : '-high';
   }
-  img.src = (pitch == Music.REST ? 'rests/' : 'notes/') + duration + flip + '.png';
-  if (pitch == Music.REST) {
+  img.src = (pitch === Music.REST ? 'rests/' : 'notes/') + duration + flip + '.png';
+  if (pitch === Music.REST) {
     img.className = 'rest';
   } else {
     img.className = 'note' + flip;
     img.title = Music.fromMidi[pitch];
-    if (flip == '-high') {
+    if (flip === '-high') {
       top += 28;
       left -= 6;
     }
@@ -603,12 +604,12 @@ Music.drawNote = function(stave, clock64, pitch, duration) {
   img.style.left = left + 'px';
   musicContainer.appendChild(img);
   var flat;
-  if (pitch != Music.REST && Music.fromMidi[pitch].indexOf('b') != -1) {
+  if (pitch !== Music.REST && Music.fromMidi[pitch].indexOf('b') !== -1) {
     var flat = document.createElement('img');
     flat.src = 'notes/flat.png';
     flat.className = 'flat';
     flat.title = img.title;
-    if (flip == '-low') {
+    if (flip === '-low') {
       top += 18;
       left -= 10;
     } else {
@@ -620,7 +621,7 @@ Music.drawNote = function(stave, clock64, pitch, duration) {
     musicContainer.appendChild(flat);
   }
 
-  if (Music.clock64ths == clock64) {
+  if (Music.clock32nds === clock32) {
     // Add a splash effect when playing a note or rest.
     var splash = img.cloneNode();
     musicContainer.appendChild(splash);
@@ -630,7 +631,7 @@ Music.drawNote = function(stave, clock64, pitch, duration) {
     setTimeout(function() {Blockly.utils.dom.removeNode(splash);}, 1000);
   }
 
-  if (pitch != Music.REST) {
+  if (pitch !== Music.REST) {
     if (pitch >= 104) {
       // First ledger line above stave.
       Music.makeLedgerLine_(ledgerTop + 9, ledgerLeft, duration, musicContainer);
@@ -657,7 +658,7 @@ Music.drawNote = function(stave, clock64, pitch, duration) {
 Music.makeLedgerLine_ = function(top, left, duration, container) {
   var line = document.createElement('img');
   line.src = 'black1x1.gif';
-  line.className = duration == 1 ? 'ledgerLineWide' : 'ledgerLine';
+  line.className = duration === 1 ? 'ledgerLineWide' : 'ledgerLine';
   line.style.top = top + 'px';
   line.style.left = left + 'px';
   container.appendChild(line);
@@ -673,7 +674,7 @@ Music.drawNote.heights_ = {};
   for (var midi in Music.fromMidi) {
     var note = Music.fromMidi[midi];
     Music.drawNote.heights_[midi] = height;
-    if (note.indexOf('b') == -1) {
+    if (note.indexOf('b') === -1) {
       height -= 4.5;
     }
   }
@@ -719,7 +720,7 @@ Music.disableExtraStarts = function(e) {
     var startBlocks = [];
     var blocks = Music.workspace.getTopBlocks(false);
     for (var i = 0, block; (block = blocks[i]); i++) {
-      if (block.type == 'music_start' && !block.isInsertionMarker()) {
+      if (block.type === 'music_start' && !block.isInsertionMarker()) {
         startBlocks.push(block);
       }
     }
@@ -727,7 +728,7 @@ Music.disableExtraStarts = function(e) {
       // Too many start blocks.  Disable any new ones.
       for (var i = 0, id; (id = e.ids[i]); i++) {
         for (var j = 0, startBlock; (startBlock = startBlocks[j]); j++) {
-          if (startBlock.id == id) {
+          if (startBlock.id === id) {
             startBlock.setDisabled(true);
           }
         }
@@ -746,7 +747,7 @@ Music.disableExtraStarts = function(e) {
     var startBlocksDisabled = [];
     var blocks = Music.workspace.getTopBlocks(true);
     for (var i = 0, block; (block = blocks[i]); i++) {
-      if (block.type == 'music_start') {
+      if (block.type === 'music_start') {
         (block.isEnabled() ? startBlocksEnabled : startBlocksDisabled)
             .push(block);
       }
@@ -765,7 +766,7 @@ Music.disableExtraStarts = function(e) {
     }
     Music.startCount = startBlocksEnabled.length;
   }
-  if (Music.startCount != oldStartCount) {
+  if (Music.startCount !== oldStartCount) {
     Music.resetButtonClick();
   }
 };
@@ -784,7 +785,7 @@ Music.reset = function() {
   Music.activeThread = null;
   Music.threads.length = 0;
   Music.threadCount = 0;
-  Music.clock64ths = 0;
+  Music.clock32nds = 0;
   Music.startTime = 0;
   Music.transcript.voices.length = 0;
 
@@ -853,7 +854,7 @@ Music.initInterpreter_ = function(interpreter, globalObject) {
       interpreter.createNativeFunction(wrapper));
 
   wrapper = function(func) {
-    if (Music.threads.length > 16) throw Error('Too many threads');
+    if (Music.threads.length > 8) throw Error('Too many threads');
     // Create a new state stack that will run the provided function.
     // Program state (empty).
     var stateStack = [];
@@ -897,7 +898,7 @@ Music.getCode = function() {
     var xml = Blockly.Xml.workspaceToDom(Music.workspace, true);
     // Remove x/y coordinates from XML if there's only one block stack.
     // There's no reason to store this, removing it helps with anonymity.
-    if (Music.workspace.getTopBlocks(false).length == 1 &&
+    if (Music.workspace.getTopBlocks(false).length === 1 &&
         xml.querySelector) {
       var block = xml.querySelector('block');
       if (block) {
@@ -982,28 +983,28 @@ Music.execute = function() {
 };
 
 /**
- * Time in milliseconds for 1/64th of a whole note.
+ * Time in milliseconds for a whole note.
  * @return {number} Time in ms.
  */
 Music.getTempo = function() {
-  return 1000 * (2.5 - 2 * Music.speedSlider.getValue()) / 64;
+  return 1000 * (2.5 - 2 * Music.speedSlider.getValue());
 };
 
 /**
- * Execute a 1/64th tick of the program.
+ * Execute a 1/32nd tick of the program.
  */
 Music.tick = function() {
-  // Delay between start of each beat (1/64ths of a whole note).
-  var scaleDuration = Music.getTempo();
+  // Delay between start of each beat (1/32nds of a whole note).
+  var scaleDuration = Music.getTempo() / 32;
   if (!Music.startTime) {
     // Either the first tick, or first tick after slider was adjusted.
-    Music.startTime = Date.now() - Music.clock64ths * scaleDuration;
+    Music.startTime = Date.now() - Music.clock32nds * scaleDuration;
   }
 
   if (Music.threads.length) {
     var ticks = 32;
     do {
-      if (ticks-- == 0) {
+      if (ticks-- === 0) {
         console.warn('Thread creation out of control.');
         break;
       }
@@ -1012,14 +1013,14 @@ Music.tick = function() {
       // threads or splice itself out of the list.
       var threadCopy = Music.threads.concat();
       for (var i = 0, thread; (thread = threadCopy[i]); i++) {
-        if (thread.pauseUntil64ths <= Music.clock64ths) {
+        if (thread.pauseUntil32nds <= Music.clock32nds) {
           Music.executeChunk_(thread);
         }
       }
-    } while (oldCount != Music.threadCount);
+    } while (oldCount !== Music.threadCount);
     Music.autoScroll();
-    Music.clock64ths++;
-    var ms = (Music.startTime + Music.clock64ths * scaleDuration) - Date.now();
+    Music.clock32nds++;
+    var ms = (Music.startTime + Music.clock32nds * scaleDuration) - Date.now();
     Music.pid = setTimeout(Music.tick, ms);
   } else {
     // Program completed
@@ -1027,8 +1028,8 @@ Music.tick = function() {
     Music.workspace.highlightBlock(null);
     // Playback complete; allow the user to submit this music to glockenspiel.
     document.getElementById('submitButton').removeAttribute('disabled');
-    // Store the tempo in the transcript.
-    Music.transcript.tempo = Music.getTempo();
+    // Store the tempo in the transcript, the duration of a 1/4 note.
+    Music.transcript.tempo = Music.getTempo() / 4;
   }
 };
 
@@ -1052,11 +1053,11 @@ Music.executeChunk_ = function(thread) {
       alert(e);
       go = false;
     }
-    if (ticks-- == 0) {
+    if (ticks-- === 0) {
       console.warn('Thread ' + thread.stave + ' is running slowly.');
       return;
     }
-    if (thread.pauseUntil64ths > Music.clock64ths) {
+    if (thread.pauseUntil32nds > Music.clock32nds) {
       // Previously executed command (play or rest) requested a pause.
       return;
     }
@@ -1090,8 +1091,8 @@ Music.autoScroll = function() {
   var LEFT_PADDING = 10;
   var WHOLE_WIDTH = 256;
   var RIGHT_PADDING = 100;
-  if (Music.clock64ths) {
-    var newWidth = Math.round(Music.clock64ths / 64 * WHOLE_WIDTH +
+  if (Music.clock32nds) {
+    var newWidth = Math.round(Music.clock32nds / 32 * WHOLE_WIDTH +
                               LEFT_PADDING + RIGHT_PADDING);
   } else {
     var newWidth = musicBox.scrollWidth + RIGHT_PADDING;
@@ -1112,7 +1113,7 @@ Music.autoScroll = function() {
   }
 
   var musicBoxMid = (400 - 36) / 2;  // There's a 36px margin for the clef.
-  musicBox.scrollLeft = Music.clock64ths * (WHOLE_WIDTH / 64) - musicBoxMid;
+  musicBox.scrollLeft = Music.clock32nds * (WHOLE_WIDTH / 32) - musicBoxMid;
 };
 
 /**
@@ -1136,7 +1137,7 @@ Music.animate = function(id) {
  * @param {string=} opt_id ID of block.
  */
 Music.play = function(duration, pitch, opt_id) {
-  if (isNaN(duration) || duration < 1 / 64) {
+  if (isNaN(duration) || duration < 1 / 32) {
     console.warn('Invalid note duration: ' + duration);
     return;
   }
@@ -1148,10 +1149,10 @@ Music.play = function(duration, pitch, opt_id) {
   }
   Music.stopSound(Music.activeThread);
   Music.activeThread.sound = createjs.Sound.play(pitch);
-  Music.activeThread.pauseUntil64ths = duration * 64 + Music.clock64ths;
+  Music.activeThread.pauseUntil32nds = duration * 32 + Music.clock32nds;
   // Make a record of this note.
   Music.activeThread.appendTranscript(pitch, duration);
-  Music.drawNote(Music.activeThread.stave, Music.clock64ths,
+  Music.drawNote(Music.activeThread.stave, Music.clock32nds,
                  pitch, duration);
   Music.animate(opt_id);
 };
@@ -1162,15 +1163,15 @@ Music.play = function(duration, pitch, opt_id) {
  * @param {string=} opt_id ID of block.
  */
 Music.rest = function(duration, opt_id) {
-  if (isNaN(duration) || duration < 1 / 64) {
+  if (isNaN(duration) || duration < 1 / 32) {
     console.warn('Invalid rest duration: ' + duration);
     return;
   }
   Music.stopSound(Music.activeThread);
-  Music.activeThread.pauseUntil64ths = duration * 64 + Music.clock64ths;
+  Music.activeThread.pauseUntil32nds = duration * 32 + Music.clock32nds;
   // Make a record of this rest.
   Music.activeThread.appendTranscript(Music.REST, duration);
-  Music.drawNote(Music.activeThread.stave, Music.clock64ths,
+  Music.drawNote(Music.activeThread.stave, Music.clock32nds,
                  Music.REST, duration);
   Music.animate(opt_id);
 };
@@ -1186,8 +1187,8 @@ Music.eventSpam = function(e) {
   // Some devices have both mice and touch, but assume the two won't occur
   // within two seconds of each other.
   var touchMouseTime = 2000;
-  if (e.type == 'click' &&
-      Music.eventSpam.previousType_ == 'touchend' &&
+  if (e.type === 'click' &&
+      Music.eventSpam.previousType_ === 'touchend' &&
       Music.eventSpam.previousDate_ + touchMouseTime > Date.now()) {
     e.preventDefault();
     e.stopPropagation();
@@ -1195,7 +1196,7 @@ Music.eventSpam = function(e) {
   }
   // Users double-click or double-tap accidentally.
   var doubleClickTime = 400;
-  if (Music.eventSpam.previousType_ == e.type &&
+  if (Music.eventSpam.previousType_ === e.type &&
       Music.eventSpam.previousDate_ + doubleClickTime > Date.now()) {
     e.preventDefault();
     e.stopPropagation();
@@ -1217,7 +1218,7 @@ Music.eventSpam.previousDate_ = 0;
  * highlight/unhighlight the specified block.
  */
 Music.highlight = function(id, opt_state) {
-  if (id && typeof id == 'string') {
+  if (id && typeof id === 'string') {
     var m = id.match(/^block_id_([^']+)$/);
     if (m) {
       id = m[1];
@@ -1264,7 +1265,7 @@ Music.Thread = function(stateStack) {
   // Stave set above 4 will play but not be visualized.
   this.stave = undefined;
   this.stateStack = stateStack;
-  this.pauseUntil64ths = 0;
+  this.pauseUntil32nds = 0;
   this.highlighedBlock = null;
   // Currently playing sound object.
   this.sound = null;
@@ -1296,7 +1297,7 @@ Music.Thread.prototype.appendTranscript = function(pitch, duration) {
       existingDuration += transcript[j][1];
     }
     // Add pause to line up this transcript stave with the clock.
-    var deltaDuration = Music.clock64ths / 64 - existingDuration;
+    var deltaDuration = Music.clock32nds / 32 - existingDuration;
     deltaDuration = Math.round(deltaDuration * 1000000) / 1000000;
     if (deltaDuration > 0) {
       transcript.push([Music.REST, deltaDuration]);

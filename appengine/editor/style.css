@@ -4,8 +4,9 @@ body {
   margin-top: 0;
 }
 h1 {
-  font-weight: normal;
   font-size: 130%;
+  font-weight: normal;
+  margin: 10px 0;
 }
 a:hover {
   color: #f00;

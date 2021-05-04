@@ -26,15 +26,14 @@ import signal
 import sys
 import threading
 import time
-import urllib2
+import requests
 
 LOG = open("/home/pi/player.log", "w", 0)
 
-#SOURCE = "http://localhost:13080/fetch"
-SOURCE = "https://glockenspiel.appspot.com/fetch"
+FETCH_URL = "https://glockenspiel.appspot.com/fetch"
 
 # Strike time for hammer in seconds.
-STRIKE_TIME = 10 / 1000.0
+STRIKE_TIME = 8 / 1000.0
 
 # Map of MIDI note values to GPIO pin number.
 PINOUT = {
@@ -99,17 +98,18 @@ class PlayForever(threading.Thread):
           if 'tempo' in new_data:
             new_tempo_ms = float(new_data['tempo'])
           else:
-            new_tempo_ms = 23.4375  # Default speed.
-          assert 5 < new_tempo_ms < 50
+            new_tempo_ms = 375 # Default speed.
+          assert 125 < new_tempo_ms < 625
           new_transcripts = new_data['voices']
           assert type(new_transcripts) == list
-          assert len(new_transcripts) > 0
+          assert 0 < len(new_transcripts) <= 8
         except:
           dataIsGood = False
         new_data = None
         if dataIsGood:
           LOG.write("Got new tune: %s\n" % new_transcripts)
-          tempo = new_tempo_ms / 1000.0
+          # Convert tempo from referencing 1/4 note to referencing 1/32 note.
+          tempo = (new_tempo_ms / 8.0) / 1000.0
           transcripts = new_transcripts
 
           # Insert a pause between the old tune and the new one.
@@ -120,9 +120,9 @@ class PlayForever(threading.Thread):
           # Channel pointers
           pointers = [0] * channels
           # Channel clocks
-          pauseUntil64ths = [0] * channels
-          # Number of 1/64ths notes since the start.
-          clock64ths = 0
+          pauseUntil32nds = [0] * channels
+          # Number of 1/32nds notes since the start.
+          clock32nds = 0
           # Time of start of execution in seconds.
           startTime = time.time()
           # Turn on the reset LED.
@@ -137,12 +137,13 @@ class PlayForever(threading.Thread):
         transcript = transcripts[i]
         if pointers[i] < len(transcript):
           done = False
-          if pauseUntil64ths[i] <= clock64ths:
+          if pauseUntil32nds[i] <= clock32nds:
             dataIsGood = True
             try:
               (note, duration) = transcript[pointers[i]]
               note = int(note)
               duration = float(duration)
+              assert 1 / 32 <= duration <= 256
             except:
               # Tuple is invalid.  Drop this channel.
               dataIsGood = False
@@ -152,7 +153,7 @@ class PlayForever(threading.Thread):
               if PINOUT.has_key(note):
                 self.pi.write(PINOUT[note], 1)
                 activeNotes.append(PINOUT[note])
-              pauseUntil64ths[i] = duration * 64 + clock64ths
+              pauseUntil32nds[i] = duration * 32 + clock32nds
               pointers[i] += 1
 
       time.sleep(STRIKE_TIME)
@@ -175,8 +176,8 @@ class PlayForever(threading.Thread):
           LOG.write("Finished playing tune.  Waiting for next tune.\n")
         time.sleep(1)
       else:
-        clock64ths += 1
-        s = (startTime + clock64ths * tempo) - time.time()
+        clock32nds += 1
+        s = (startTime + clock32nds * tempo) - time.time()
         if (s > 0):
           time.sleep(s)
 
@@ -200,11 +201,10 @@ def fetch():
   global new_data
   # Checks to see if there's a new tune on App Engine.
   try:
-    response = urllib2.urlopen(SOURCE)
+    text = requests.get(FETCH_URL)
   except Exception as e:
     LOG.write("Failure to fetch: %s\nTrying again.\n" % e)
     return
-  text = response.read()
   if text.strip():
     try:
       new_data = json.loads(text)

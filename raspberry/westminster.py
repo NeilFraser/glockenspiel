@@ -23,10 +23,10 @@ import requests
 from datetime import datetime
 
 # App Engine submission page.
-URL = 'https://glockenspiel.appspot.com/submit'
+SUBMIT_URL = 'https://glockenspiel.appspot.com/submit'
 
 # Larger tempo is slower.
-TEMPO = 32.0
+TEMPO = 512
 
 # Look up the nearest quarter and hour.
 now = datetime.now()
@@ -49,6 +49,7 @@ group3 = [[88, 0.25], [90, 0.25], [92, 0.25], [88, 0.5]]
 group4 = [[92, 0.25], [88, 0.25], [90, 0.25], [83, 0.5]]
 group5 = [[83, 0.25], [90, 0.25], [92, 0.25], [88, 0.5]]
 
+# Assemble the notes.
 if quarter == 1:
   notes = group1
 elif quarter == 2:
@@ -58,9 +59,11 @@ elif quarter == 3:
 elif quarter == 4:
   notes = group2 + group3 + group4 + group5
   notes.append([-1, 1])
+  # Append the hour bongs.
   for i in range(hour):
     notes.append([88, 1])
 
+# Transmit the notes to the server.
 data = json.dumps({'tempo': TEMPO, 'voices': [notes]})
-x = requests.post(URL, data = {'data': data})
+x = requests.post(SUBMIT_URL, data = {'data': data})
 print(x.text)

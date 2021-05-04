@@ -2,7 +2,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1.0, user-scalable=no">
-    <link rel="icon" type="image/png" href="favicon32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="../editor/favicon32.png" sizes="32x32">
     <title>Blockly Glockenspiel: Documentation</title>
     <link rel="stylesheet" href="style.css">
   </head>
@@ -42,14 +42,14 @@
 
     <p>There are three different ways to compose music for the glockenspiel:</p>
     <ul>
-    <li>Blockly offers an easy graphical programming experience.</li>
-    <li>JavaScript offers more advanced capabilities.</li>
-    <li>Network access allows one to bypass the front-end and use your own platform.</li>
+    <li><a href="#blockly">Blockly API</a> offers an easy graphical programming experience.</li>
+    <li><a href="#javascript">JavaScript API</a> offers more advanced capabilities.</li>
+    <li><a href="#network">Network API</a> allows one to bypass the front-end and use your own platform.</li>
     </ul>
 
-    <h2>Blockly</h2>
+    <h2 id="blockly">Blockly API</h2>
     <p>There are five options for the length of each note.  From top to bottom, they are whole notes, half notes, quarter notes
-    (the default), eighth notes, and sixteenth notes.</p>
+    (the default), eighth notes, and sixteenth notes.  Thirty-second notes are not available in Blockly, only in JavaScript.</p>
 
     <p><img src="note-lengths.png"></p>
 
@@ -73,20 +73,98 @@
 
     <p><img src="rest-lengths.png"></p>
 
-    <p>Use a "when ▶ clicked" event handler to start code executing.  One can create up to four of these handlers,
-    allowing for multiple simultaneous threads.  Below is a two-threaded program that plays the same four-note tune as a round.</p>
+    <p>Use a "when ▶ clicked" event handler to start code executing.  One can
+    create up to four of these handlers, allowing for multiple simultaneous
+    threads.  Below is a two-threaded program that plays the same four-note
+    tune as a round.</p>
 
     <p><img src="starts.png"></p>
 
-    <h2>JavaScript</h2>
+    <h2 id="javascript">JavaScript API</h2>
 
-    <p>Any program built with Blockly can be seen in its JavaScript form.  However, once one edits the JavaScript,
-    it is not possible to go back to Blockly, except by either deleting the entire program.</p>
+    <p>Any program built with Blockly can be viewed in its JavaScript form.
+    However, once one edits the JavaScript, it is not possible to go back to
+    Blockly, except by either deleting the entire program or reloading the page.</p>
 
+    <p>It is recommended that a program start with this definition of the following
+    twenty-five global variables for note pitches:</p>
 
-    <h2>Network</h2>
-    <p>TODO: Neil</p>
+    <pre class="codeblock">var A5=81, Bb5=82, B5=83, C6=84, Db6=85, D6=86, Eb6=87, E6=88, F6=89, Gb6=90, G6=91, Ab6=92, A6=93,
+    Bb6=94, B6=95, C7=96, Db7=97, D7=98, Eb7=99, E7=100, F7=101, Gb7=102, G7=103, Ab7=104, A7=105;</pre>
 
-    <p>(Seriously, what did you expect?)</p>
+    <p>The API is made up of three functions:</p>
+
+    <p><strong><code>play(<i>length</i>, <i>pitch</i>)</code></strong> - Plays a note
+    of the specified length and pitch.  Length is intended to be 1, 1/2, 1/4, 1/8, 1/16,
+    or 1/32.  Shorter lengths are an error and will be dropped.  Longer lengths will be
+    represented as a whole note, followed by the appropriate length of rests.
+    Lengths not a multiple of 1/32 will be rounded down.  Pitch is a MIDI
+    integer from 81 through 105, or one of the pre-defined convenience variables
+    A5 through A7.</p>
+
+    <p><strong><code>rest(<i>length</i>)</code></strong> - Pauses the music for the specified length.
+    Rests may have the same lengths as notes.</p>
+
+    <p><strong><code>runThread(<i>func</i>)</code></strong> - The provided function
+    will be run in a new concurrently executing thread.  There may be up to
+    eight running threads, though only four will shown on the scrolling
+    visualization.  Below is a two-threaded program that plays the same four-note
+    tune as a round (identical to the example in the Blockly API section above).</p>
+
+    <pre class="codeblock">var A5=81, Bb5=82, B5=83, C6=84, Db6=85, D6=86, Eb6=87, E6=88, F6=89, Gb6=90, G6=91, Ab6=92, A6=93,
+    Bb6=94, B6=95, C7=96, Db7=97, D7=98, Eb7=99, E7=100, F7=101, Gb7=102, G7=103, Ab7=104, A7=105;
+
+runThread(start1);
+runThread(start2);
+
+function start1() {
+  tune();
+}
+
+function start2() {
+  rest(1/2);
+  tune();
+}
+
+function tune() {
+  play(1/4, C6);
+  play(1/4, E6);
+  play(1/4, G6);
+  play(1/4, C7);
+}</pre>
+
+    <h2 id="network">Network API</h2>
+
+    <p>The Blockly and JavaScript client-side editors generate a transcript
+    of the tune, then transmit it to the glockenspiel to perform.  It is possible
+    to generate and transmit a transcript without the help of the editors.</p>
+
+    <p>The data format of the transcript is JSON.  Below is the transcript of a
+    four-note tune played in two voices as a round (identical to the examples in
+    the Blockly API and JavaScript API sections above).</p>
+
+    <pre class="codeblock">{
+  tempo: 375,
+  voices: [
+    [[84, 0.25], [88, 0.25], [91, 0.25], [96, 0.25]],
+    [[-1, 0.5], [84, 0.25], [88, 0.25], [91, 0.25], [96, 0.25]]
+  ]
+}</pre>
+
+    <p><strong><code>tempo</code></strong> specifies the number of milliseconds
+    a 1/4 note would play.  The range is restricted from 125 to 625, and
+    defaults to 375 if not specified.</p>
+
+    <p><strong><code>voices</code></strong> specifies an array of voices.  Each voice
+    is an array of tuples.  Each tuple contains a MIDI pitch value (81 through 105,
+    or -1 for a rest), and by a duration (1/32 through 256).</p>
+
+    <p>Open an HTTP connection to <strong><code>https://glockenspiel.appspot.com/submit</code></strong>
+    and send a POST request with a property named <strong><code>data</code></strong>
+    containing the transcript.</p>
+
+    <p>A full working example in Python is this script which
+    <a href="https://github.com/NeilFraser/glockenspiel/blob/master/raspberry/westminster.py">plays the Westminster Quarters</a>
+    based on the current time.</p>
   </body>
 </html>

@@ -8,9 +8,10 @@ h1 {
   font-weight: normal;
 }
 h2 {
+  border-bottom: 2px dotted #8c8;
   font-size: 140%;
   font-weight: normal;
-  border-bottom: 2px dotted #8c8;
+  margin-top: 2em;
 }
 a:hover {
   color: #f00;
@@ -35,4 +36,9 @@ a:hover {
 #notes td:last-child {
   padding: 0 1ex;
   text-align: right;
+}
+
+.codeblock {
+  padding-left: 1em;
+  border-left: dotted #888 1px;
 }
