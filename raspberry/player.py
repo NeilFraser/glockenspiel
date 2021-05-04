@@ -28,7 +28,7 @@ import threading
 import time
 import requests
 
-LOG = open("/home/pi/player.log", "w", 0)
+LOG = open("/home/pi/player.log", "w")
 
 FETCH_URL = "https://glockenspiel.appspot.com/fetch"
 
@@ -71,7 +71,7 @@ RESET_PIN = 21
 # to the play thread.
 new_data = None
 
-LOG.write("Watching %s...\n" % SOURCE)
+LOG.write("Watching %s...\n" % FETCH_URL)
 
 class PlayForever(threading.Thread):
   """
