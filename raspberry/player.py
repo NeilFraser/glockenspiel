@@ -28,8 +28,6 @@ import threading
 import time
 import requests
 
-LOG = open("/home/pi/player.log", "w")
-
 FETCH_URL = "https://glockenspiel.appspot.com/fetch"
 
 # Strike time for hammer in seconds.
@@ -71,7 +69,7 @@ RESET_PIN = 21
 # to the play thread.
 new_data = None
 
-LOG.write("Watching %s...\n" % FETCH_URL)
+print("Watching %s...\n" % FETCH_URL)
 
 class PlayForever(threading.Thread):
   """
@@ -107,7 +105,7 @@ class PlayForever(threading.Thread):
           dataIsGood = False
         new_data = None
         if dataIsGood:
-          LOG.write("Got new tune: %s\n" % new_transcripts)
+          print("Got new tune: %s\n" % new_transcripts)
           # Convert tempo from referencing 1/4 note to referencing 1/32 note.
           tempo = (new_tempo_ms / 8.0) / 1000.0
           transcripts = new_transcripts
@@ -129,7 +127,7 @@ class PlayForever(threading.Thread):
           self.pi.set_mode(RESET_PIN, pigpio.OUTPUT)
           self.pi.write(RESET_PIN, 1)
         else:
-          LOG.write("Got invalid tune: %s\n" % transcripts)
+          print("Got invalid tune: %s\n" % transcripts)
 
       done = True
       activeNotes = []
@@ -147,7 +145,7 @@ class PlayForever(threading.Thread):
             except:
               # Tuple is invalid.  Drop this channel.
               dataIsGood = False
-              LOG.write("Got invalid tuple: %s\n" % transcript[pointers[i]])
+              print("Got invalid tuple: %s\n" % transcript[pointers[i]])
               transcripts[i] = []
             if dataIsGood:
               if note in PINOUT:
@@ -164,7 +162,7 @@ class PlayForever(threading.Thread):
       # If pressed, terminate the tune.
       self.pi.set_mode(RESET_PIN, pigpio.INPUT)
       if self.pi.read(RESET_PIN):
-        LOG.write("Tune manually terminated with local reset button.\n")
+        print("Tune manually terminated with local reset button.\n")
         done = True
       self.pi.set_mode(RESET_PIN, pigpio.OUTPUT)
 
@@ -173,7 +171,7 @@ class PlayForever(threading.Thread):
         self.pi.write(RESET_PIN, 0)
         if channels > 0:
           channels = 0
-          LOG.write("Finished playing tune.  Waiting for next tune.\n")
+          print("Finished playing tune.  Waiting for next tune.\n")
         time.sleep(1)
       else:
         clock32nds += 1
@@ -185,7 +183,7 @@ class PlayForever(threading.Thread):
     global PINOUT, RESET_PIN
     # Gracefully shutdown without spewing traceback.
     # Turn off any powered solenoids.
-    LOG.write("Shutting down.\n")
+    print("Shutting down.\n")
     for pinNumber in PINOUT.values():
       self.pi.write(pinNumber, 0)
     self.pi.set_mode(RESET_PIN, pigpio.OUTPUT)
@@ -203,13 +201,13 @@ def fetch():
   try:
     text = requests.get(FETCH_URL).text
   except Exception as e:
-    LOG.write("Failure to fetch: %s\nTrying again.\n" % e)
+    print("Failure to fetch: %s\nTrying again.\n" % e)
     return
   if text.strip():
     try:
       new_data = json.loads(text)
     except ValueError:
-      LOG.write("Invalid JSON.\nTrying again.\n")
+      print("Invalid JSON.\nTrying again.\n")
 
 while(True):
   fetch()

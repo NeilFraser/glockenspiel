@@ -100,10 +100,12 @@
     represented as a whole note, followed by the appropriate length of rests.
     Lengths not a multiple of 1/32 will be rounded down.  Pitch is a MIDI
     integer from 81 through 105, or one of the pre-defined convenience variables
-    A5 through A7.</p>
+    A5 through A7.  Execution of this function call halts the current thread for
+    the duration of the note.</p>
 
-    <p><strong><code>rest(<i>length</i>)</code></strong> - Pauses the music for the specified length.
-    Rests may have the same lengths as notes.</p>
+    <p><strong><code>rest(<i>length</i>)</code></strong> - Pauses the music for
+    the specified length.  Rests may have the same lengths as notes.  Execution
+    of this function call halts the current thread for the duration of the rest.</p>
 
     <p><strong><code>runThread(<i>func</i>)</code></strong> - The provided function
     will be run in a new concurrently executing thread.  There may be up to

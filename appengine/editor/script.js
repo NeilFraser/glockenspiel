@@ -557,7 +557,7 @@ Music.drawNote = function(stave, clock32, pitch, duration) {
     if (duration === legalDuration) {
       break;  // Valid note.
     }
-    while (duration > legalDuration) {
+    while (duration >= legalDuration) {
       Music.drawNote(stave, clock32, pitch, legalDuration);
       pitch = Music.REST;  // Subsequent duration is a pause.
       clock32 += legalDuration * 32;
