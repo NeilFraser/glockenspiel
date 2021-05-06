@@ -133,7 +133,7 @@ class PlayForever(threading.Thread):
 
       done = True
       activeNotes = []
-      for i in xrange(channels):
+      for i in range(channels):
         transcript = transcripts[i]
         if pointers[i] < len(transcript):
           done = False
@@ -150,7 +150,7 @@ class PlayForever(threading.Thread):
               LOG.write("Got invalid tuple: %s\n" % transcript[pointers[i]])
               transcripts[i] = []
             if dataIsGood:
-              if PINOUT.has_key(note):
+              if note in PINOUT:
                 self.pi.write(PINOUT[note], 1)
                 activeNotes.append(PINOUT[note])
               pauseUntil32nds[i] = duration * 32 + clock32nds
@@ -201,7 +201,7 @@ def fetch():
   global new_data
   # Checks to see if there's a new tune on App Engine.
   try:
-    text = requests.get(FETCH_URL)
+    text = requests.get(FETCH_URL).text
   except Exception as e:
     LOG.write("Failure to fetch: %s\nTrying again.\n" % e)
     return
