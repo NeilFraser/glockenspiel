@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 """
 Copyright 2019 Google LLC
 
@@ -97,7 +97,7 @@ class PlayForever(threading.Thread):
             new_tempo_ms = float(new_data['tempo'])
           else:
             new_tempo_ms = 375 # Default speed.
-          assert 125 < new_tempo_ms < 625
+          assert 125 <= new_tempo_ms <= 625
           new_transcripts = new_data['voices']
           assert type(new_transcripts) == list
           assert 0 < len(new_transcripts) <= 8
