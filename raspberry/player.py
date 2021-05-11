@@ -190,14 +190,19 @@ class PlayForever(threading.Thread):
     self.pi.write(RESET_PIN, 0)
     sys.exit(0)
 
-f = PlayForever()
-f.daemon = True
-f.start()
 
+def startup():
+  # On start up, play the entire scale.
+  global new_data, PINOUT
+  notes = []
+  for midi in PINOUT.keys():
+    notes.append([midi, 1/8])
+  new_data = {'tempo': 125, 'voices': [notes]}
+  time.sleep(5)
 
 def fetch():
+  # Check to see if there's a new tune waiting on App Engine.
   global new_data
-  # Checks to see if there's a new tune on App Engine.
   try:
     text = requests.get(FETCH_URL).text
   except Exception as e:
@@ -208,6 +213,13 @@ def fetch():
       new_data = json.loads(text)
     except ValueError:
       print("Invalid JSON.\nTrying again.\n")
+
+
+f = PlayForever()
+f.daemon = True
+f.start()
+
+startup()
 
 while(True):
   fetch()
