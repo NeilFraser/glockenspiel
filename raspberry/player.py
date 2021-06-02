@@ -150,7 +150,6 @@ class PlayForever(threading.Thread):
         for note in datum:
           if note in PINOUT:
             self.pi.write(PINOUT[note], 1)
-            activeNotes.append(PINOUT[note])
           else:
             print("Skipping invalid note: %s\n" % note)
         time.sleep(STRIKE_TIME)
@@ -173,11 +172,11 @@ class PlayForever(threading.Thread):
 def startup():
   # On start up, play the entire scale.
   global new_data, PINOUT
-  notes = []
+  stream = []
   for midi in PINOUT.keys():
-    notes.append([midi])
-    notes.append(1/4)
-  new_data = {'tempo': 125, 'stream': [notes]}
+    stream.append([midi])
+    stream.append(1/4)
+  new_data = {'tempo': 125, 'stream': stream}
   time.sleep(5)
 
 def fetch():
