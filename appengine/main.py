@@ -15,14 +15,19 @@ limitations under the License.
 """
 
 import cgi
+import datetime
 import expiration
 import storage
 from google.cloud import ndb
 
 
-# Datastore model.
+# Datastore models.
+# Tune waiting on server for collection by the glockenspiel.
 class Tune(ndb.Model):
   data = ndb.TextProperty()
+# Last time the glockenspiel fetched from the server.
+class Time(ndb.Model):
+  data = ndb.DateTimeProperty()
 
 
 # Route to requested handler.
@@ -52,15 +57,20 @@ def redirect(environ, start_response):
 
 # Store the latest tune in Datastore using App Engine.
 def submit(environ, start_response):
-  forms = cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ)
+  forms = cgi.FieldStorage(fp=environ["wsgi.input"], environ=environ)
   data = forms["data"].value
 
   client = ndb.Client()
   with client.context():
     row = Tune(id="PLAY", data=data)
     row.put()
+    result = Time.get_by_id("WHEN")
 
-  out = "Your tune has been sent to the glockenspiel and will play shortly."
+  delta = datetime.datetime.now() - result.data
+  if delta.total_seconds() < 60:
+    out = "Your tune has been sent to the glockenspiel and will play shortly."
+  else:
+    out = "The glockenspiel appears to be offline at the moment."
 
   headers = [
     ("Content-Type", "text/plain")
@@ -78,6 +88,9 @@ def fetch(environ, start_response):
     if result:
       out = result.data
       result.key.delete()
+    # Record that the glockenspiel is online as of this time.
+    row = Time(id="WHEN", data=datetime.datetime.now())
+    row.put()
 
   headers = [
     ("Content-Type", "text/plain")

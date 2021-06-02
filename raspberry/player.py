@@ -92,10 +92,15 @@ class PlayForever(threading.Thread):
     pause_remaining = 0
     while(True):
       if new_data:
+        if stream:
+          print("Interrupting current tune\n")
+          # Insert a pause between the old tune and the new one.
+          time.sleep(1)
+
         print("Got new tune: %s\n" % new_data)
         # Convert tempo from referencing 1/4 note to referencing 1/32 note.
-        tempo = (new_data['tempo'] / 8.0) / 1000.0
-        stream = new_data['stream']
+        tempo = (new_data["tempo"] / 8.0) / 1000.0
+        stream = new_data["stream"]
         new_data = None
         stream_index = 0
         pause_remaining = 0
@@ -113,8 +118,6 @@ class PlayForever(threading.Thread):
         self.pi.write(RESET_PIN, 0)
         print("Finished playing tune.  Waiting for next tune.\n")
         stream = None
-        # Insert a pause between the old tune and the new one.
-        time.sleep(1)
 
       if stream == None:
         # Just waiting for next tune to arrive.
@@ -176,7 +179,7 @@ def startup():
   for midi in PINOUT.keys():
     stream.append([midi])
     stream.append(1/4)
-  new_data = {'tempo': 125, 'stream': stream}
+  new_data = {"tempo": 125, "stream": stream}
   time.sleep(5)
 
 def fetch():
@@ -197,14 +200,14 @@ def fetch():
 
 def validateData(unvalidated_data):
   # Ensure stream is valid, and normalize repeated content.
-  if 'tempo' in unvalidated_data:
-    validated_tempo = float(unvalidated_data['tempo'])
+  if "tempo" in unvalidated_data:
+    validated_tempo = float(unvalidated_data["tempo"])
   else:
     validated_tempo = 375  # Default speed.
-  assert 125 <= validated_tempo <= 625, 'Tempo out of bounds'
+  assert 125 <= validated_tempo <= 625, "Tempo out of bounds"
 
-  unvalidated_stream = unvalidated_data['stream']
-  assert type(unvalidated_stream) == list, 'Stream not a list'
+  unvalidated_stream = unvalidated_data["stream"]
+  assert type(unvalidated_stream) == list, "Stream not a list"
   validated_stream = []
   pending_notes = set()
   pending_pause = 0
@@ -216,7 +219,7 @@ def validateData(unvalidated_data):
         continue
       # Got some new notes.  Append any pending pause.
       if pending_pause > 0:
-        assert 1 / 32 <= pending_pause <= 256, 'Invalid duration'
+        assert 1 / 32 <= pending_pause <= 256, "Invalid duration"
         validated_stream.append(pending_pause)
         pending_pause = 0
       if datum != None:
@@ -228,15 +231,15 @@ def validateData(unvalidated_data):
         continue
       # Got a new pause.  Append any pending notes.
       if pending_notes:
-        assert len(pending_notes) < 8, 'More than 8 notes at once'
+        assert len(pending_notes) < 8, "More than 8 notes at once"
         validated_stream.append(list(pending_notes))
         pending_notes.clear()
       if datum != None:
         pending_pause += float(datum)
-  assert len(validated_stream), 'Empty stream'
+  assert len(validated_stream), "Empty stream"
   return {
-    'tempo': validated_tempo,
-    'stream': validated_stream
+    "tempo": validated_tempo,
+    "stream": validated_stream
   }
 
 

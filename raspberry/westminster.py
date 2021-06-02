@@ -23,7 +23,7 @@ import requests
 from datetime import datetime
 
 # App Engine submission page.
-SUBMIT_URL = 'https://glockenspiel.appspot.com/submit'
+SUBMIT_URL = "https://glockenspiel.appspot.com/submit"
 
 # Larger tempo is slower.
 TEMPO = 512
@@ -64,6 +64,6 @@ elif quarter == 4:
     stream.append([88])
 
 # Transmit the notes to the server.
-data = json.dumps({'tempo': TEMPO, 'stream': stream})
-x = requests.post(SUBMIT_URL, data = {'data': data})
+data = json.dumps({"tempo": TEMPO, "stream": stream})
+x = requests.post(SUBMIT_URL, data = {"data": data})
 print(x.text)
