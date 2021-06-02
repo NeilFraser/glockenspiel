@@ -44,7 +44,7 @@ Music.interpreter = null;
 
 /**
  * All executing threads.
- * @type !Array.<!Music.Thread>
+ * @type !Array<!Music.Thread>
  */
 Music.threads = [];
 
@@ -73,7 +73,7 @@ Music.REST = -1;
 
 /**
  * Array of editor tabs (Blockly and ACE).
- * @type Array.<!Element>
+ * @type ?Array<!Element>
  */
 Music.editorTabs = null;
 
@@ -91,11 +91,16 @@ Music.blocksEnabled_ = true;
 Music.ignoreEditorChanges_ = true;
 
 /**
- * Object containing a record of the last play.
- * Each voice is an array of [pitch, duration] tuples.
- * @type !Object
+ * Speed of the last play (125 to 625).
  */
-Music.transcript = {tempo: NaN, voices: []};
+Music.transcriptTempo = NaN;
+
+/**
+ * Array containing voices of the last play.
+ * Each voice is an array of [pitch, duration] tuples.
+ * @type {!Array<!Array<number>>}
+ */
+Music.transcriptVoices = [];
 
 /**
  * Number of created Threads.  Always incrementing during execution,
@@ -488,14 +493,14 @@ Music.drawStaveBox = function() {
   musicContainer.appendChild(img);
 
   // Draw empty staves.
-  var count = Music.transcript.voices.length > 0 ?
-      Music.transcript.voices.length : Music.startCount;
+  var count = Music.transcriptVoices.length > 0 ?
+      Music.transcriptVoices.length : Music.startCount;
   Music.drawStave(Blockly.utils.math.clamp(count, 1, 4));
 
   // Repopulate the music from the transcripts.
-  for (var i = 0; i < Math.min(4, Music.transcript.voices.length); i++) {
+  for (var i = 0; i < Math.min(4, Music.transcriptVoices.length); i++) {
     var clock32 = 0;
-    for (var j = 0, tuple; (tuple = Music.transcript.voices[i][j]); j++) {
+    for (var j = 0, tuple; (tuple = Music.transcriptVoices[i][j]); j++) {
       Music.drawNote(i + 1, clock32, tuple[0], tuple[1]);
       clock32 += tuple[1] * 32;
     }
@@ -787,7 +792,8 @@ Music.reset = function() {
   Music.threadCount = 0;
   Music.clock32nds = 0;
   Music.startTime = 0;
-  Music.transcript.voices.length = 0;
+  Music.transcriptVoices.length = 0;
+  Music.transcriptTempo = NaN;
 
   Music.drawStaveBox();
 };
@@ -1029,7 +1035,7 @@ Music.tick = function() {
     // Playback complete; allow the user to submit this music to glockenspiel.
     document.getElementById('submitButton').removeAttribute('disabled');
     // Store the tempo in the transcript, the duration of a 1/4 note.
-    Music.transcript.tempo = Music.getTempo() / 4;
+    Music.transcriptTempo = Music.getTempo() / 4;
   }
 };
 
@@ -1249,12 +1255,81 @@ Music.submitButtonClick = function(e) {
         'XHR error.\nStatus: ' + xhr.status;
     MusicDialogs.storageAlert(submitButton, text);
   };
-  xhr.send('data=' + JSON.stringify(Music.transcript));
+  // Convert the transcript into a stream.
+  var data = {
+    tempo: Music.transcriptTempo,
+    stream: Music.voicesToStream(Music.transcriptVoices)
+  };
+  xhr.send('data=' + JSON.stringify(data));
+};
+
+/**
+ * Flatten the 2D voices array into a simpler 1D stream that more closely
+ * resembles the MIDI format.
+ * @param {!Array<!Array<number>>} voices Tuples of MIDI notes and durations.
+ * @return {!Array<!Array<number>|number>} Stream of notes and pauses.
+ */
+Music.voicesToStream = function(voices) {
+  var stream = [];
+  var clock32nds = -1;
+  var tickAccumulator = -1;
+  var newNotesSet = new Set();
+
+  // Initialize voice pointers and voice clocks.
+  var pointers = [];
+  var pauseUntil32nds = [];
+  for (var i = 0; i < voices.length; i++) {
+    pointers.push(0);
+    pauseUntil32nds.push(0);
+  }
+  // Walk through the voices at 1/32nd note intervals and record the stream.
+  do {
+    clock32nds++;
+    tickAccumulator++;
+    var done = true;
+    for (var i = 0, voice; (voice = voices[i]); i++) {
+      if (pauseUntil32nds[i] > clock32nds) {
+        // A note on this voice is still playing.
+        done = false;
+      } else {
+        // Consume the next note tuple.
+        var tuple = voice[pointers[i]];
+        if (!tuple) {
+          continue;  // Ran out of data on this voice.
+        }
+        done = false;
+        var note = tuple[0];
+        var duration = tuple[1];
+        if (note !== Music.REST) {
+          newNotesSet.add(note);
+        }
+        pauseUntil32nds[i] = duration * 32 + clock32nds;
+        pointers[i]++;
+      }
+    }
+    if (newNotesSet.size) {
+      if (tickAccumulator) {
+        stream.push(tickAccumulator / 32);
+        tickAccumulator = 0;
+      }
+      // Array.from(newNotesSet) is not supported in IE11.
+      var newNotesArray = [];
+      newNotesSet.forEach(function(x) {newNotesArray.push(x);});
+      newNotesArray.sort();
+      stream.push(newNotesArray);
+      newNotesSet.clear();
+    }
+  } while (!done);
+  if (tickAccumulator) {
+    stream.push(tickAccumulator / 32);
+  }
+
+  return stream;
 };
 
 /**
  * One execution thread.
- * @param {!Array.<!Interpreter.State>} stateStack JS-Interpreter state stack.
+ * @param {!Array<!Interpreter.State>} stateStack JS-Interpreter state stack.
  * @constructor
  */
 Music.Thread = function(stateStack) {
@@ -1287,12 +1362,12 @@ Music.Thread.prototype.appendTranscript = function(pitch, duration) {
     }
     this.stave = i;
     // Create a new transcript stave if this stave is not recycled.
-    if (!Music.transcript.voices[i - 1]) {
-      Music.transcript.voices[i - 1] = [];
+    if (!Music.transcriptVoices[i - 1]) {
+      Music.transcriptVoices[i - 1] = [];
     }
     // Compute length of existing content in this transcript stave.
     var existingDuration = 0;
-    var transcript = Music.transcript.voices[i - 1];
+    var transcript = Music.transcriptVoices[i - 1];
     for (var j = 0; j < transcript.length; j++) {
       existingDuration += transcript[j][1];
     }
@@ -1305,7 +1380,7 @@ Music.Thread.prototype.appendTranscript = function(pitch, duration) {
     // Redraw the visualization with the new number of staves.
     Music.drawStaveBox();
   }
-  Music.transcript.voices[this.stave - 1].push([pitch, duration]);
+  Music.transcriptVoices[this.stave - 1].push([pitch, duration]);
 };
 
 

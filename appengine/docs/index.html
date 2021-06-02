@@ -147,19 +147,17 @@ function tune() {
 
     <pre class="codeblock">{
   tempo: 375,
-  voices: [
-    [[84, 0.25], [88, 0.25], [91, 0.25], [96, 0.25]],
-    [[-1, 0.5], [84, 0.25], [88, 0.25], [91, 0.25], [96, 0.25]]
-  ]
+  stream: [[84], 0.25, [88], 0.25, [84, 91], 0.25, [88, 96], 0.25, [91], 0.25, [96], 0.25]
 }</pre>
 
     <p><strong><code>tempo</code></strong> specifies the number of milliseconds
     a 1/4 note would play.  The range is restricted from 125 to 625, and
     defaults to 375 if not specified.</p>
 
-    <p><strong><code>voices</code></strong> specifies an array of voices.  Each voice
-    is an array of tuples.  Each tuple contains a MIDI pitch value (81 through 105,
-    or -1 for a rest), and by a duration (1/32 through 256).</p>
+    <p><strong><code>stream</code></strong> specifies an array of alternating notes
+    and pauses.  Notes are an array of MIDI pitch values (81 through 105) to be
+    played simultaneously.  A maximum of eight notes may be played at once.
+    Pauses are delays until the next note (1/32 through 256).</p>
 
     <p>Open an HTTP connection to <strong><code>https://glockenspiel.appspot.com/submit</code></strong>
     and send a POST request with a property named <strong><code>data</code></strong>

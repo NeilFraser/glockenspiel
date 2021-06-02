@@ -87,97 +87,76 @@ class PlayForever(threading.Thread):
 
   def run(self):
     global PINOUT, RESET_PIN, new_data
-    transcripts = []
-    channels = 0
+    stream = None
+    stream_index = 0
+    pause_remaining = 0
     while(True):
       if new_data:
-        dataIsGood = True
-        try:
-          if 'tempo' in new_data:
-            new_tempo_ms = float(new_data['tempo'])
-          else:
-            new_tempo_ms = 375 # Default speed.
-          assert 125 <= new_tempo_ms <= 625
-          new_transcripts = new_data['voices']
-          assert type(new_transcripts) == list
-          assert 0 < len(new_transcripts) <= 8
-        except:
-          dataIsGood = False
+        print("Got new tune: %s\n" % new_data)
+        # Convert tempo from referencing 1/4 note to referencing 1/32 note.
+        tempo = (new_data['tempo'] / 8.0) / 1000.0
+        stream = new_data['stream']
         new_data = None
-        if dataIsGood:
-          print("Got new tune: %s\n" % new_transcripts)
-          # Convert tempo from referencing 1/4 note to referencing 1/32 note.
-          tempo = (new_tempo_ms / 8.0) / 1000.0
-          transcripts = new_transcripts
+        stream_index = 0
+        pause_remaining = 0
 
-          # Insert a pause between the old tune and the new one.
-          time.sleep(1)
+        # Number of 1/32nds notes since the start.
+        clock32nds = 0
+        # Time of start of execution in seconds.
+        startTime = time.time()
+        # Turn on the reset LED.
+        self.pi.set_mode(RESET_PIN, pigpio.OUTPUT)
+        self.pi.write(RESET_PIN, 1)
 
-          # Number of channels
-          channels = len(transcripts)
-          # Channel pointers
-          pointers = [0] * channels
-          # Channel clocks
-          pauseUntil32nds = [0] * channels
-          # Number of 1/32nds notes since the start.
-          clock32nds = 0
-          # Time of start of execution in seconds.
-          startTime = time.time()
-          # Turn on the reset LED.
-          self.pi.set_mode(RESET_PIN, pigpio.OUTPUT)
-          self.pi.write(RESET_PIN, 1)
-        else:
-          print("Got invalid tune: %s\n" % transcripts)
+      if stream and stream_index >= len(stream):
+        # Turn off the reset LED.
+        self.pi.write(RESET_PIN, 0)
+        print("Finished playing tune.  Waiting for next tune.\n")
+        stream = None
+        # Insert a pause between the old tune and the new one.
+        time.sleep(1)
 
-      done = True
-      activeNotes = []
-      for i in range(channels):
-        transcript = transcripts[i]
-        if pointers[i] < len(transcript):
-          done = False
-          if pauseUntil32nds[i] <= clock32nds:
-            dataIsGood = True
-            try:
-              (note, duration) = transcript[pointers[i]]
-              note = int(note)
-              duration = float(duration)
-              assert 1 / 32 <= duration <= 256
-            except:
-              # Tuple is invalid.  Drop this channel.
-              dataIsGood = False
-              print("Got invalid tuple: %s\n" % transcript[pointers[i]])
-              transcripts[i] = []
-            if dataIsGood:
-              if note in PINOUT:
-                self.pi.write(PINOUT[note], 1)
-                activeNotes.append(PINOUT[note])
-              pauseUntil32nds[i] = duration * 32 + clock32nds
-              pointers[i] += 1
-
-      time.sleep(STRIKE_TIME)
-      for pinNumber in activeNotes:
-        self.pi.write(pinNumber, 0)
+      if stream == None:
+        # Just waiting for next tune to arrive.
+        time.sleep(1)
+        continue
 
       # Switch the reset GPIO pin from LED to button for a moment.
       # If pressed, terminate the tune.
       self.pi.set_mode(RESET_PIN, pigpio.INPUT)
       if self.pi.read(RESET_PIN):
         print("Tune manually terminated with local reset button.\n")
-        done = True
+        stream = None
+        continue
       self.pi.set_mode(RESET_PIN, pigpio.OUTPUT)
 
-      if done:
-        # Turn off the reset LED.
-        self.pi.write(RESET_PIN, 0)
-        if channels > 0:
-          channels = 0
-          print("Finished playing tune.  Waiting for next tune.\n")
-        time.sleep(1)
-      else:
+      if pause_remaining > 0:
+        # Keep waiting for the right time for the next note.
+        pause_remaining -= 1
         clock32nds += 1
         s = (startTime + clock32nds * tempo) - time.time()
         if (s > 0):
           time.sleep(s)
+        continue
+
+      # Read the next item off the stream.
+      datum = stream[stream_index]
+      stream_index += 1
+
+      if type(datum) == float:
+        # New pause.
+        pause_remaining = datum * 32
+      elif type(datum) == list:
+        for note in datum:
+          if note in PINOUT:
+            self.pi.write(PINOUT[note], 1)
+            activeNotes.append(PINOUT[note])
+          else:
+            print("Skipping invalid note: %s\n" % note)
+        time.sleep(STRIKE_TIME)
+        for note in datum:
+          if note in PINOUT:
+            self.pi.write(PINOUT[note], 0)
 
   def shutdown(self, sig, frame):
     global PINOUT, RESET_PIN
@@ -206,13 +185,60 @@ def fetch():
   try:
     text = requests.get(FETCH_URL).text
   except Exception as e:
-    print("Failure to fetch: %s\nTrying again.\n" % e)
+    print("Failure to fetch: %s\n" % e)
     return
   if text.strip():
     try:
-      new_data = json.loads(text)
-    except ValueError:
-      print("Invalid JSON.\nTrying again.\n")
+      unvalidated_data = json.loads(text)
+      new_data = validateData(unvalidated_data)
+    except ValueError as e:
+      print("Invalid JSON: %s\n" % e)
+
+
+def validateData(unvalidated_data):
+  # Ensure stream is valid, and normalize repeated content.
+  if 'tempo' in unvalidated_data:
+    validated_tempo = float(unvalidated_data['tempo'])
+  else:
+    validated_tempo = 375  # Default speed.
+  assert 125 <= validated_tempo <= 625, 'Tempo out of bounds'
+
+  unvalidated_stream = unvalidated_data['stream']
+  assert type(unvalidated_stream) == list, 'Stream not a list'
+  validated_stream = []
+  pending_notes = set()
+  pending_pause = 0
+  # Append a null operation to ensure no remainder when loop exits.
+  unvalidated_stream.append(None)
+  for datum in unvalidated_stream:
+    if type(datum) == list or datum == None:
+      if datum != None and len(datum) == 0:
+        continue
+      # Got some new notes.  Append any pending pause.
+      if pending_pause > 0:
+        assert 1 / 32 <= pending_pause <= 256, 'Invalid duration'
+        validated_stream.append(pending_pause)
+        pending_pause = 0
+      if datum != None:
+        for note in datum:
+          pending_notes.add(int(note))
+
+    if type(datum) == int or type(datum) == float or datum == None:
+      if datum != None and datum == 0:
+        continue
+      # Got a new pause.  Append any pending notes.
+      if pending_notes:
+        assert len(pending_notes) < 8, 'More than 8 notes at once'
+        validated_stream.append(list(pending_notes))
+        pending_notes.clear()
+      if datum != None:
+        pending_pause += float(datum)
+  assert len(validated_stream), 'Empty stream'
+  return {
+    'tempo': validated_tempo,
+    'stream': validated_stream
+  }
+
 
 
 f = PlayForever()

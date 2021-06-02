@@ -43,27 +43,28 @@ if hour == 0:
   hour = 12
 print("Hour: %d Quarter: %d" % (hour, quarter))
 
-group1 = [[92, 0.25], [90, 0.25], [88, 0.25], [83, 0.5]]
-group2 = [[88, 0.25], [92, 0.25], [90, 0.25], [83, 0.5]]
-group3 = [[88, 0.25], [90, 0.25], [92, 0.25], [88, 0.5]]
-group4 = [[92, 0.25], [88, 0.25], [90, 0.25], [83, 0.5]]
-group5 = [[83, 0.25], [90, 0.25], [92, 0.25], [88, 0.5]]
+group1 = [[92], 0.25, [90], 0.25, [88], 0.25, [83], 0.5]
+group2 = [[88], 0.25, [92], 0.25, [90], 0.25, [83], 0.5]
+group3 = [[88], 0.25, [90], 0.25, [92], 0.25, [88], 0.5]
+group4 = [[92], 0.25, [88], 0.25, [90], 0.25, [83], 0.5]
+group5 = [[83], 0.25, [90], 0.25, [92], 0.25, [88], 0.5]
 
 # Assemble the notes.
 if quarter == 1:
-  notes = group1
+  stream = group1
 elif quarter == 2:
-  notes = group2 + group3
+  stream = group2 + group3
 elif quarter == 3:
-  notes = group4 + group5 + group1
+  stream = group4 + group5 + group1
 elif quarter == 4:
-  notes = group2 + group3 + group4 + group5
-  notes.append([-1, 1])
+  stream = group2 + group3 + group4 + group5
+  stream.append([-1, 1])
   # Append the hour bongs.
   for i in range(hour):
-    notes.append([88, 1])
+    stream.append([88])
+    stream.append(1)
 
 # Transmit the notes to the server.
-data = json.dumps({'tempo': TEMPO, 'voices': [notes]})
+data = json.dumps({'tempo': TEMPO, 'stream': stream})
 x = requests.post(SUBMIT_URL, data = {'data': data})
 print(x.text)
