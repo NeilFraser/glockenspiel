@@ -58,11 +58,10 @@ elif quarter == 3:
   stream = group4 + group5 + group1
 elif quarter == 4:
   stream = group2 + group3 + group4 + group5
-  stream.append([-1, 1])
   # Append the hour bongs.
   for i in range(hour):
-    stream.append([88])
     stream.append(1)
+    stream.append([88])
 
 # Transmit the notes to the server.
 data = json.dumps({'tempo': TEMPO, 'stream': stream})
