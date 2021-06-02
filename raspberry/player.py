@@ -175,8 +175,9 @@ def startup():
   global new_data, PINOUT
   notes = []
   for midi in PINOUT.keys():
-    notes.append([midi, 1/8])
-  new_data = {'tempo': 125, 'voices': [notes]}
+    notes.append([midi])
+    notes.append(1/4)
+  new_data = {'tempo': 125, 'stream': [notes]}
   time.sleep(5)
 
 def fetch():
