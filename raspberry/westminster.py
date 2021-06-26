@@ -21,12 +21,16 @@ limitations under the License.
 import json
 import requests
 from datetime import datetime
+from time import sleep
 
 # App Engine submission page.
 SUBMIT_URL = "https://glockenspiel.appspot.com/submit"
 
 # Larger tempo is slower.
 TEMPO = 512
+
+# Number of seconds before the minute to submit the chimes.
+LAG = 5
 
 # Look up the nearest quarter and hour.
 now = datetime.now()
@@ -63,7 +67,16 @@ elif quarter == 4:
     stream.append(1)
     stream.append([88])
 
-# Transmit the notes to the server.
 data = json.dumps({"tempo": TEMPO, "stream": stream})
+
+# Wait for the right moment.
+now = datetime.now()
+delay = -LAG - now.second
+while delay < 0:
+  delay += 60
+print("Waiting %d seconds..." % delay)
+sleep(delay)
+
+# Transmit the notes to the server.
 x = requests.post(SUBMIT_URL, data = {"data": data})
 print(x.text)
