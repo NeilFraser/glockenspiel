@@ -236,10 +236,6 @@ Music.init = function() {
       'start0,start1,start2,start3,start4,start5,start6,start7,start8,start9');
   // Only start1-4 are used, but no harm in being safe.
 
-  if (document.getElementById('submitButton')) {
-    Music.bindClick('submitButton', Music.submitToGallery);
-  }
-
   // Initialize the slider.
   var sliderSvg = document.getElementById('slider');
   Music.speedSlider = new Slider(10, 35, 130, sliderSvg, Music.sliderChange);
@@ -271,7 +267,7 @@ Music.init = function() {
   // Lazy-load the sounds.
   setTimeout(Music.importSounds, 3);
 
-  Music.bindClick(linkButton, BlocklyStorage.link);
+  Music.bindClick('linkButton', BlocklyStorage.link);
   Music.bindClick('helpButton', Music.showHelp);
 };
 
@@ -691,6 +687,7 @@ Music.drawNote.heights_ = {};
 Music.showHelp = function() {
   var help = document.getElementById('dialogHelp');
   var button = document.getElementById('helpButton');
+  button.blur();  // Don't reopen dialog with space key.
   var style = {
     width: '50%',
     left: '25%',
@@ -1243,6 +1240,7 @@ Music.submitButtonClick = function(e) {
     return;
   }
   var submitButton = document.getElementById('submitButton');
+  submitButton.blur();  // Don't reopen dialog with space key.
   if (location.protocol === 'file:') {
     MusicDialogs.storageAlert(submitButton, 'Cannot submit XHR from "file:" URL.');
     return;

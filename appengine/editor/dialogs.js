@@ -300,7 +300,7 @@ MusicDialogs.storageAlert = function(origin, message) {
 };
 
 /**
- * If the user preses enter, escape, or space, hide the dialog.
+ * If the user presses enter, escape, or space, hide the dialog.
  * @param {!Event} e Keyboard event.
  * @private
  */
