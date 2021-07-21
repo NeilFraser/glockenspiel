@@ -23,7 +23,7 @@ Modifications: 'provide' and 'require' deleted.
 
 * Babel
 Source: https://unpkg.com/@babel/standalone/babel.min.js
-Date: 27 October 2019
+Date: 21 July 2021
 Modifications: None.
 
 * JS-Interpreter
