@@ -687,7 +687,6 @@ Music.drawNote.heights_ = {};
 Music.showHelp = function() {
   var help = document.getElementById('dialogHelp');
   var button = document.getElementById('helpButton');
-  button.blur();  // Don't reopen dialog with space key.
   var style = {
     width: '50%',
     left: '25%',
@@ -1240,7 +1239,6 @@ Music.submitButtonClick = function(e) {
     return;
   }
   var submitButton = document.getElementById('submitButton');
-  submitButton.blur();  // Don't reopen dialog with space key.
   if (location.protocol === 'file:') {
     MusicDialogs.storageAlert(submitButton, 'Cannot submit XHR from "file:" URL.');
     return;

@@ -114,7 +114,6 @@ BlocklyStorage.handleRetrieveXmlResponse_ = function() {
  */
 BlocklyStorage.alert_ = function(message) {
   var linkButton = document.getElementById('linkButton');
-  linkButton.blur();  // Don't reopen dialog with space key.
   MusicDialogs.storageAlert(linkButton, message);
 };
 

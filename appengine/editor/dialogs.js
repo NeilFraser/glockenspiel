@@ -88,6 +88,11 @@ MusicDialogs.showDialog = function(content, origin, animate, modal, style,
       border.style.visibility = 'hidden';
     }
   }
+  // The origin (if it exists) might be a button we should lose focus on.
+  try {
+    origin.blur();
+  } catch(e) {}
+
   if (animate && origin) {
     MusicDialogs.matchBorder_(origin, false, 0.2);
     MusicDialogs.matchBorder_(dialog, true, 0.8);
@@ -306,9 +311,7 @@ MusicDialogs.storageAlert = function(origin, message) {
  */
 MusicDialogs.dialogKeyDown_ = function(e) {
   if (MusicDialogs.isDialogVisible_) {
-    if (e.keyCode == 13 ||
-        e.keyCode == 27 ||
-        e.keyCode == 32) {
+    if (e.keyCode == 13 || e.keyCode == 27 || e.keyCode == 32) {
       MusicDialogs.hideDialog(true);
       e.stopPropagation();
       e.preventDefault();
