@@ -1,9 +1,42 @@
+Setting up the Glockenspiel's Raspberry Pi Zero W from scratch.
+
+
+Install Raspberry Pi OS Lite on an SD card.
+https://www.raspberrypi.org/software/operating-systems/
+
+Switch OFF solenoids using hardware switch.
+
+Boot Raspberry Pi with SD card
+
+Login with: pi / raspberry
+
 To prevent some GPIO pins going high on boot, add this line to /boot/config.txt:
   gpio=2-27=op,dl
 
+> sudo raspi-config
+- Configure Wifi
+- Hostname (glockenspiel)
+- Autologin (yes)
+- Timezone
+- Reboot
+
+Switch ON solenoids using hardware switch.
+
+Install pigpio:
+> sudo apt-get install pigpiod
+> sudo apt-get install python3-pigpio
+
+Download the glockenspiel files:
+> wget -O - https://tinyurl.com/glockenspiel-setup | bash
+That's -O (Oh), not -0 (zero).
+That's an alias to https://raw.githubusercontent.com/NeilFraser/glockenspiel/master/raspberry/update.sh
+
 To start the player automatically, add these lines to /etc/rc.local:
   sudo pigpiod
-  /usr/bin/python3 /home/pi/player.py &> /home/pi/player.log
+  /usr/bin/python3 /home/pi/player.py &
 
 Start the Westminster Quarters with this:
-  crontab crontab.txt
+> crontab crontab.txt
+
+Restart
+> reboot
