@@ -22,6 +22,9 @@ To prevent some GPIO pins going high on boot, add this line to /boot/config.txt:
 
 Switch ON solenoids using hardware switch.
 
+Set up any alternate wifi in /etc/wpa_supplicant/wpa_supplicant.conf
+More info: https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md
+
 Install pigpio:
 > sudo apt-get install pigpiod
 > sudo apt-get install python3-pigpio
