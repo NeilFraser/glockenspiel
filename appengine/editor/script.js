@@ -356,8 +356,10 @@ Music.editorChanged = function() {
       // Abort change, preserve link.
       var code = Music.blocksToCode();
       Music.ignoreEditorChanges_ = true;
-      Music.editor['setValue'](code, -1);
-      Music.ignoreEditorChanges_ = false;
+      setTimeout(function() {
+        Music.editor['setValue'](code, -1);
+        Music.ignoreEditorChanges_ = false;
+      }, 0);
     }
   } else {
     var code = Music.editor['getValue']();
