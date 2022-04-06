@@ -320,8 +320,12 @@ button.primary {
   opacity: .6;
 }
 
+#youtubeButton {
+  margin-left: 20px;
+}
+
 #submitButton {
-  margin-left: 173px;
+  margin-left: 10px;
 }
 
 /* Slider. */
