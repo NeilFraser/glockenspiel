@@ -9,8 +9,8 @@ if ! [ -f $APP ] ; then
 fi
 
 PROJECT=glockenspiel
-VERSION=3
+VERSION=live
 
 echo 'Beginning deployment...'
-gcloud app deploy --project $PROJECT --version $VERSION --no-promote
+gcloud app deploy --project $PROJECT --version $VERSION --promote
 echo 'Deployment finished.'
