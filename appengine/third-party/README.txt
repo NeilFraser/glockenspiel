@@ -28,7 +28,7 @@ Modifications: None.
 
 * JS-Interpreter
 Source: https://blockly.games/third-party/JS-Interpreter/compressed.js
-Date: 27 April 2021
+Date: 3 February 2023
 Modifications: None.
 
 * soundfont

@@ -862,24 +862,25 @@ Music.initInterpreter_ = function(interpreter, globalObject) {
     // Create a new state stack that will run the provided function.
     // Program state (empty).
     var stateStack = [];
-    var node = new interpreter.nodeConstructor({options:{}});
+    var globalScope = interpreter.getGlobalScope();
+    var node = interpreter.newNode();
     node['type'] = 'Program';
     node['body'] = [];
-    var state = new Interpreter.State(node, interpreter.globalScope);
+    var state = new Interpreter.State(node, globalScope);
     state.done = false;
     stateStack.push(state);
     // ExpressionStatement node.
-    var node = new interpreter.nodeConstructor({options:{}});
+    var node = interpreter.newNode();
     node['type'] = 'ExpressionStatement';
-    var state = new Interpreter.State(node, interpreter.globalScope);
+    var state = new Interpreter.State(node, globalScope);
     state.done_ = true;
     stateStack.push(state);
     // CallExpression node (fully populated, ready to call).
-    var node = new interpreter.nodeConstructor({options:{}});
+    var node = interpreter.newNode();
     node['type'] = 'CallExpression';
-    var state = new Interpreter.State(node, interpreter.globalScope);
+    var state = new Interpreter.State(node, globalScope);
     state.doneCallee_ = true;
-    state.funcThis_ = interpreter.globalScope;
+    state.funcThis_ = globalScope;
     state.func_ = func;
     state.doneArgs_ = true;
     state.arguments_ = [];
@@ -982,7 +983,7 @@ Music.execute = function() {
     throw e;
   }
   Music.interpreter = new Interpreter(code, Music.initInterpreter_);
-  Music.threads.push(new Music.Thread(Music.interpreter.stateStack));
+  Music.threads.push(new Music.Thread(Music.interpreter.getStateStack()));
   setTimeout(Music.tick, 100);
 };
 
@@ -1044,9 +1045,8 @@ Music.tick = function() {
  */
 Music.executeChunk_ = function(thread) {
   Music.activeThread = thread;
-  Music.interpreter.stateStack = thread.stateStack;
   // Switch the interpreter to run the provided thread.
-  Music.interpreter.stateStack = thread.stateStack;
+  Music.interpreter.setStateStack(thread.stateStack);
   var ticks = 10000;
   var go;
   do {
