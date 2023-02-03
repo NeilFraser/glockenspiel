@@ -1,12 +1,11 @@
 /**
  * @license
- * Copyright 2013 Google LLC
+ * Copyright 2013 Neil Fraser
  * SPDX-License-Identifier: Apache-2.0
  */
 
 /**
  * @fileoverview Common support code for dialogs.
- * @author fraser@google.com (Neil Fraser)
  */
 'use strict';
 

@@ -1,12 +1,11 @@
 /**
  * @license
- * Copyright 2016 Google LLC
+ * Copyright 2016 Neil Fraser
  * SPDX-License-Identifier: Apache-2.0
  */
 
 /**
- * @fileoverview JavaScript for Music game.
- * @author fraser@google.com (Neil Fraser)
+ * @fileoverview JavaScript for Glockenspiel editor.
  */
 'use strict';
 
@@ -1325,6 +1324,7 @@ Music.voicesToStream = function(voices) {
   return stream;
 };
 
+
 /**
  * One execution thread.
  * @param {!Array<!Interpreter.State>} stateStack JS-Interpreter state stack.
@@ -1380,7 +1380,6 @@ Music.Thread.prototype.appendTranscript = function(pitch, duration) {
   }
   Music.transcriptVoices[this.stave - 1].push([pitch, duration]);
 };
-
 
 /**
  * Thread complete.  Wrap up.

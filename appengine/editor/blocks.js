@@ -1,12 +1,11 @@
 /**
  * @license
- * Copyright 2012 Google LLC
+ * Copyright 2012 Neil Fraser
  * SPDX-License-Identifier: Apache-2.0
  */
 
 /**
- * @fileoverview Blocks for Music game.
- * @author fraser@google.com (Neil Fraser)
+ * @fileoverview Blocks for Glockenspiel editor.
  */
 'use strict';
 
@@ -65,7 +64,7 @@ Blockly.Blocks['music_note'] = {
       "previousStatement": null,
       "nextStatement": null,
       "colour": 160,
-      "tooltip": "Plays one musical note of the specified duration and pitch."
+      "tooltip": "Plays one musical note of the specified duration and pitch.",
     });
   }
 };
@@ -107,7 +106,7 @@ Blockly.Blocks['music_rest'] = {
       "previousStatement": null,
       "nextStatement": null,
       "colour": 160,
-      "tooltip": "Waits for the specified duration."
+      "tooltip": "Waits for the specified duration.",
    });
   }
 };
@@ -142,7 +141,7 @@ Blockly.Blocks['music_start'] = {
         }
       ],
       "colour": 0,
-      "tooltip": "Executes the blocks inside when the 'Run Program' button is clicked."
+      "tooltip": "Executes the blocks inside when the 'Run Program' button is clicked.",
     });
   }
 };
