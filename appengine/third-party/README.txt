@@ -17,13 +17,13 @@ Date: 14 October 2019
 Modifications: None.
 
 * blockly-games
-Source: https://github.com/google/blockly-games/blob/master/appengine/js/slider.js
-Date: 15 September 2019
+Source: https://github.com/google/blockly-games/blob/master/appengine/src/slider.js
+Date: 27 June 2023
 Modifications: 'provide' and 'require' deleted.
 
 * Babel
 Source: https://unpkg.com/@babel/standalone/babel.min.js
-Date: 3 February 2023
+Date: 27 June 2023
 Modifications: None.
 
 * JS-Interpreter
