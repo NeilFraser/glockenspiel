@@ -13,11 +13,13 @@
     <script src="../third-party/blockly/javascript_compressed.js"></script>
     <script src="../third-party/blockly/en.js"></script>
     <script src="../third-party/blockly-games/slider.js"></script>
+    <script src="../third-party/midi-parser-js/main.js"></script>
     <script src="field_pitch.js"></script>
     <script src="blocks.js"></script>
     <script src="dialogs.js"></script>
     <script src="storage.js"></script>
     <script src="script.js"></script>
+    <!--<script src="midi.js"></script>-->
   </head>
   <body>
     <table width="100%">
@@ -27,6 +29,8 @@
             <h1>Blockly Glockenspiel</h1>
           </td>
           <td class="farSide">
+            <input type="file" id="fileInput" accept="audio/midi, audio/x-midi"/>
+            <button id="uploadButton" title="Upload a MIDI file." style="display: none;"><img src="1x1.gif" class="upload icon21"></button>
             <button id="linkButton" title="Save your program and generate sharable link."><img src="1x1.gif" class="link icon21"></button>
             <button id="helpButton">Help</button>
           </td>

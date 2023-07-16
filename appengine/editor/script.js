@@ -270,6 +270,8 @@ Music.init = function() {
 
   Music.bindClick('linkButton', BlocklyStorage.link);
   Music.bindClick('helpButton', Music.showHelp);
+
+  if (Midi) Midi.init();
 };
 
 window.addEventListener('load', Music.init);

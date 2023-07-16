@@ -15,6 +15,10 @@ a:hover {
   text-align: right;
 }
 
+#fileInput {
+  display: none;
+}
+
 /* Tabs */
 #tabarea {
   position: fixed !important;
@@ -177,6 +181,7 @@ button:hover:not(:disabled) {
 #dialog button {
   min-width: 4em;
 }
+
 .readonly .blocklyMainBackground {
   stroke: none;
 }
@@ -357,4 +362,7 @@ button.primary {
 }
 .link {
   background-position: -63px 0;
+}
+.upload {
+  background-position: -63px -21px;
 }

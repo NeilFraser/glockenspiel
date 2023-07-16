@@ -31,6 +31,11 @@ Source: https://blockly.games/third-party/JS-Interpreter/compressed.js
 Date: 3 February 2023
 Modifications: None.
 
+* midi-parser-js
+Source: https://github.com/colxi/midi-parser-js
+Date: 16 July 2023
+Modifications: None.
+
 * soundfont
 Source: https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FluidR3_GM/glockenspiel-mp3
 Date: 15 September 2019
