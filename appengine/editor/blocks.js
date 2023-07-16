@@ -72,6 +72,23 @@ Blockly.Blocks['music_note'] = {
 Blockly.JavaScript['music_note'] = function(block) {
   var pitch = Blockly.JavaScript.valueToCode(block, 'PITCH',
       Blockly.JavaScript.ORDER_COMMA) || 'C7';
+
+  // Look for computed flats/sharps, and replace with JS variables.
+  // E.g. 'C7 + 1' -> 'Db7'
+  var cache = Blockly.JavaScript['music_note'].cache_;
+  var notes = Object.values(Music.fromMidi);
+  for (var i = 0; i < notes.length; i++) {
+    var down = notes[i - 1];  // May be undefined.
+    var origin = notes[i];
+    var up = notes[i + 1];  // May be undefined.
+    if (down && pitch === origin + ' - 1') {
+      pitch = down;
+    }
+    if (up && (pitch === origin + ' + 1' || pitch === '1 + ' + origin)) {
+      pitch = up;
+    }
+  }
+
   return 'play(' + block.getFieldValue('DURATION') + ', ' + pitch +
       ', \'block_id_' + block.id + '\');\n';
 };
