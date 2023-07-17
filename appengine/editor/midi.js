@@ -48,54 +48,51 @@ Midi.doneUpload = function() {
 Midi.startParse = function(arrayBuffer) {
   const dataArray = new Uint8Array(arrayBuffer);
   const midi = MidiParser.parse(dataArray);
-  console.log(midi);
   const pitchTable = Midi.createPitchTable(Midi.allPitches(midi));
-
-  const timeDivision = midi['timeDivision'];
-
   Music.workspace.clear();
-  const startBlock = Music.workspace.newBlock('music_start');
-  startBlock.initSvg();
-  startBlock.render();
-  let parentConnection = startBlock.getInput('STACK').connection;
+  setTimeout(Midi.populate.bind(Midi, midi, pitchTable), 1);
+};
+
+Midi.populate = function(midi, pitchTable) {
+  const blocks = [];
+  const timeDivision = midi['timeDivision'] * 2;
+  const stacks = [];
 
   let time = 0;
-  let lastBlockTime = 0;
-  let durationBlock = null;
   const events = midi['track'][1]['event'];
   for (const event of events) {
     time += event['deltaTime'];
     if (event['type'] === 9) {
       // Note on.
+      // Find (or create) a stack.
+      const stack = Midi.getStack(stacks, time);
       // Set duration of last block.
-      let deltaTime = (time - lastBlockTime) / timeDivision;
-      lastBlockTime = time;
-      const timeSlice = Midi.timeSlice(deltaTime);
-      const fraction = timeSlice[0];
-      deltaTime = timeSlice[1];
-      if (fraction) {
-        durationBlock.setFieldValue(fraction, 'DURATION');
+      let deltaTime = (time - stack.lastBlockTime) / timeDivision;
+      stack.lastBlockTime = time;
+      if (stack.lastNoteBlock) {
+        const timeSlice = Midi.timeSlice(deltaTime);
+        const fraction = timeSlice[0];
+        deltaTime = timeSlice[1];
+        if (fraction) {
+          stack.lastNoteBlock.setFieldValue(fraction, 'DURATION');
+        }
       }
       while (deltaTime >= 1/16) {
         // Create rest block.
         const timeSlice = Midi.timeSlice(deltaTime);
         const fraction = timeSlice[0];
         deltaTime = timeSlice[1];
-        const durationBlock = Music.workspace.newBlock('music_rest');
-        durationBlock.setFieldValue(fraction, 'DURATION');
-        durationBlock.initSvg();
-        durationBlock.render();
-        parentConnection.connect(durationBlock.previousConnection);
-        parentConnection = durationBlock.nextConnection;
+        const restBlock = Music.workspace.newBlock('music_rest');
+        restBlock.setFieldValue(fraction, 'DURATION');
+        blocks.push(restBlock);
+        stack.connection.connect(restBlock.previousConnection);
+        stack.connection = restBlock.nextConnection;
       }
 
       // Create note and pitch blocks.
       const noteBlock = Music.workspace.newBlock('music_note');
       const pitchBlock = Music.workspace.newBlock('music_pitch');
-      noteBlock.initSvg();
-      noteBlock.render();
-      pitchBlock.initSvg();
-      pitchBlock.render();
+      blocks.push(noteBlock, pitchBlock);
 
       // Set the pitch field.
       const pitchTuple = pitchTable.get(event['data'][0]);
@@ -112,22 +109,45 @@ Midi.startParse = function(arrayBuffer) {
         arithmeticBlock.getInput('A').connection.connect(pitchBlock.outputConnection);
         arithmeticBlock.getInput('B').connection.connect(numberBlock.outputConnection);
         noteBlock.getInput('PITCH').connection.connect(arithmeticBlock.outputConnection);
-        arithmeticBlock.initSvg();
-        arithmeticBlock.render();
-        numberBlock.initSvg();
-        numberBlock.render();
+        blocks.push(arithmeticBlock, numberBlock);
       }
 
       // Record the duration field.
-      durationBlock = noteBlock;
+      stack.lastNoteBlock = noteBlock;
 
       // Connect note/pitch block to stack.
-      parentConnection.connect(noteBlock.previousConnection);
-      parentConnection = noteBlock.nextConnection;
+      stack.connection.connect(noteBlock.previousConnection);
+      stack.connection = noteBlock.nextConnection;
     }
   }
+  for (var i = blocks.length - 1; i >= 0; i--) {
+    blocks[i].initSvg();
+  }
+  console.time('Rendering blocks');
+  for (var i = blocks.length - 1; i >= 0; i--) {
+    blocks[i].render();
+  }
+  console.timeEnd('Rendering blocks');
+};
 
-  Music.workspace.cleanUp();
+Midi.getStack = function(stacks, time) {
+  for (const stack of stacks) {
+    if (stack.lastBlockTime < time) {
+      return stack;
+    }
+  }
+  // No existing available stack found.  Create a new one.
+  const startBlock = Music.workspace.newBlock('music_start');
+  startBlock.moveBy(stacks.length * 300 + 10, 10);
+  startBlock.initSvg();
+  startBlock.render();
+  const stack = {
+    connection: startBlock.getInput('STACK').connection,
+    lastNoteBlock: null,
+    lastBlockTime: 0,
+  };
+  stacks.push(stack);
+  return stack;
 };
 
 /**
@@ -176,7 +196,6 @@ Midi.allPitches = function(midi) {
 
 
 Midi.createPitchTable = function(histogram) {
-  console.log(histogram);
   const minBell = Math.min(...Object.keys(Music.fromMidi));
   const maxBell = Math.max (...Object.keys(Music.fromMidi));
   const minPitch = Math.min(...histogram.keys());
@@ -202,9 +221,7 @@ Midi.createPitchTable = function(histogram) {
       bestOffset = offset;
       bestScore = score;
     }
-    console.log(`Offset: ${offset}, score: ${score}`);
   }
-  console.log('Best Offset:', bestOffset);
 
   const pitchTable = new Map();
   for (const rawPitch of histogram.keys()) {
@@ -220,8 +237,5 @@ Midi.createPitchTable = function(histogram) {
     }
     pitchTable.set(rawPitch, [abcPitch, accidental]);
   }
-
-  console.log(pitchTable);
-
   return pitchTable;
 };
