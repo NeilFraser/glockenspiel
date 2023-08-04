@@ -192,7 +192,7 @@ def fetch():
     try:
       unvalidated_data = json.loads(text)
       new_data = validateData(unvalidated_data)
-    except ValueError as e:
+    except Exception as e:
       print("Invalid JSON: %s\n" % e)
 
 
