@@ -74,7 +74,6 @@ class PlayForever(threading.Thread):
   Runs in a separate thread.
   """
   def __init__(self):
-    global PINOUT, RESET_PIN
     threading.Thread.__init__(self)
     self.pi = pigpio.pi()
     for pinNumber in PINOUT.values():
@@ -84,7 +83,7 @@ class PlayForever(threading.Thread):
     signal.signal(signal.SIGINT, self.shutdown)
 
   def run(self):
-    global PINOUT, RESET_PIN, new_data
+    global new_data
     stream = None
     stream_index = 0
     pause_remaining = 0
@@ -159,7 +158,6 @@ class PlayForever(threading.Thread):
             self.pi.write(PINOUT[note], 0)
 
   def shutdown(self, sig, frame):
-    global PINOUT, RESET_PIN
     # Gracefully shutdown without spewing traceback.
     # Turn off any powered solenoids.
     print("Shutting down.\n")
@@ -172,7 +170,7 @@ class PlayForever(threading.Thread):
 
 def startup():
   # On start up, play the entire scale.
-  global new_data, PINOUT
+  global new_data
   stream = []
   for midi in PINOUT.keys():
     stream.append([midi])
