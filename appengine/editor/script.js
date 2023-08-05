@@ -96,8 +96,8 @@ Music.transcriptTempo = NaN;
 
 /**
  * Array containing voices of the last play.
- * Each voice is an array of [pitch, duration] tuples.
- * @type {!Array<!Array<number>>}
+ * Each voice is an array of [pitches, duration] tuples.
+ * @type {!Array<!Array<!Array<number>|number>>}
  */
 Music.transcriptVoices = [];
 
@@ -500,10 +500,15 @@ Music.drawStaveBox = function() {
 
   // Repopulate the music from the transcripts.
   for (var i = 0; i < Math.min(4, Music.transcriptVoices.length); i++) {
+    var transcriptVoice = Music.transcriptVoices[i];
     var clock32 = 0;
-    for (var j = 0, tuple; (tuple = Music.transcriptVoices[i][j]); j++) {
-      Music.drawNote(i + 1, clock32, tuple[0], tuple[1]);
-      clock32 += tuple[1] * 32;
+    for (var j = 0, tuple; (tuple = transcriptVoice[j]); j++) {
+      var pitches = tuple[0];
+      var duration = tuple[1];
+      for (var k = 0; k < pitches.length; k++) {
+        Music.drawNote(i + 1, clock32, pitches[k], duration);
+      }
+      clock32 += duration * 32;
     }
   }
 };
@@ -849,6 +854,7 @@ Music.initInterpreter_ = function(interpreter, globalObject) {
   // API
   var wrapper;
   wrapper = function(duration, pitch, id) {
+    pitch = interpreter.pseudoToNative(pitch);
     Music.play(duration, pitch, id);
   };
   interpreter.setProperty(globalObject, 'play',
@@ -1077,13 +1083,13 @@ Music.executeChunk_ = function(thread) {
  * @param {!Music.Thread} thread Thread object.
  */
 Music.stopSound = function(thread) {
-  var sound = thread.sound;
-  if (sound) {
+  for (var i = 0; i < thread.sounds.length; i++) {
+    var sound = thread.sounds[i];
     // Firefox requires 100ms to start a note playing, so delaying the end
     // eliminates the staccato.  Adds a nice smoothness to Chrome.
     setTimeout(sound['stop'].bind(sound), 100);
-    thread.sound = null;
   }
+  thread.sounds.length = 0;
 };
 
 /**
@@ -1140,27 +1146,31 @@ Music.animate = function(id) {
 /**
  * Play one note.
  * @param {number} duration Fraction of a whole note length to play.
- * @param {number} pitch MIDI note number to play (81-105).
+ * @param {number|!Array<number>} pitches MIDI note number to play (81-105).
  * @param {string=} opt_id ID of block.
  */
-Music.play = function(duration, pitch, opt_id) {
+Music.play = function(duration, pitches, opt_id) {
   if (isNaN(duration) || duration < 1 / 32) {
     console.warn('Invalid note duration: ' + duration);
     return;
   }
-  pitch = Math.round(pitch);
-  if (!Music.fromMidi[pitch]) {
-    console.warn('MIDI note out of range (81-105): ' + pitch);
-    Music.rest(duration, opt_id);
-    return;
-  }
   Music.stopSound(Music.activeThread);
-  Music.activeThread.sound = createjs.Sound.play(pitch);
-  Music.activeThread.pauseUntil32nds = duration * 32 + Music.clock32nds;
+  if (!Array.isArray(pitches)) {
+    pitches = [pitches];
+  }
   // Make a record of this note.
-  Music.activeThread.appendTranscript(pitch, duration);
-  Music.drawNote(Music.activeThread.stave, Music.clock32nds,
-                 pitch, duration);
+  Music.activeThread.appendTranscript(pitches, duration);
+  for (var i = 0; i < pitches.length; i++) {
+    var pitch = Math.round(pitches[i]);
+    if (!Music.fromMidi[pitch]) {
+      console.warn('MIDI note out of range (81-105): ' + pitch);
+      pitch = Music.REST;
+    }
+    Music.activeThread.sounds.push(createjs.Sound.play(pitch));
+    Music.drawNote(Music.activeThread.stave, Music.clock32nds,
+                  pitch, duration);
+  }
+  Music.activeThread.pauseUntil32nds = duration * 32 + Music.clock32nds;
   Music.animate(opt_id);
 };
 
@@ -1299,10 +1309,13 @@ Music.voicesToStream = function(voices) {
           continue;  // Ran out of data on this voice.
         }
         done = false;
-        var note = tuple[0];
+        var notes = tuple[0];
         var duration = tuple[1];
-        if (note !== Music.REST) {
-          newNotesSet.add(note);
+        for (var j = 0; j < notes.length; j++) {
+          var note = notes[j];
+          if (note !== Music.REST) {
+            newNotesSet.add(note);
+          }
         }
         pauseUntil32nds[i] = duration * 32 + clock32nds;
         pointers[i]++;
@@ -1345,10 +1358,10 @@ Music.Thread = function(stateStack) {
   this.pauseUntil32nds = 0;
   this.highlighedBlock = null;
   // Currently playing sound object.
-  this.sound = null;
+  this.sounds = [];
 };
 
-Music.Thread.prototype.appendTranscript = function(pitch, duration) {
+Music.Thread.prototype.appendTranscript = function(pitches, duration) {
   if (this.stave === undefined) {
     // Find all stave numbers currently in use.
     var staves = [];
@@ -1382,7 +1395,7 @@ Music.Thread.prototype.appendTranscript = function(pitch, duration) {
     // Redraw the visualization with the new number of staves.
     Music.drawStaveBox();
   }
-  Music.transcriptVoices[this.stave - 1].push([pitch, duration]);
+  Music.transcriptVoices[this.stave - 1].push([pitches, duration]);
 };
 
 /**

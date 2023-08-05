@@ -167,7 +167,6 @@ class PlayForever(threading.Thread):
     self.pi.write(RESET_PIN, 0)
     sys.exit(0)
 
-
 def startup():
   # On start up, play the entire scale.
   global new_data

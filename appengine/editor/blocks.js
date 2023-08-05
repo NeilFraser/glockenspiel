@@ -44,7 +44,7 @@ Blockly.Blocks['music_note'] = {
       [{"src": "notes/0.125-low.png",
         "width": 9, "height": 19, "alt": "eighth"}, "1/8"],
       [{"src": "notes/0.0625-low.png",
-        "width": 9, "height": 19, "alt": "sixteenth"}, "1/16"]
+        "width": 9, "height": 19, "alt": "sixteenth"}, "1/16"],
     ];
     this.jsonInit({
       "message0": "play %1 note %2",
@@ -52,12 +52,12 @@ Blockly.Blocks['music_note'] = {
         {
           "type": "field_dropdown",
           "name": "DURATION",
-          "options": options
+          "options": options,
         },
         {
           "type": "input_value",
           "name": "PITCH",
-          "check": "Number"
+          "check": ["Number", "Array"],
         }
       ],
       "inputsInline": true,
@@ -115,7 +115,7 @@ Blockly.Blocks['music_rest'] = {
             [{"src": "rests/0.125.png",
               "width": 10, "height": 20, "alt": "eighth"}, "1/8"],
             [{"src": "rests/0.0625.png",
-              "width": 10, "height": 20, "alt": "sixteenth"}, "1/16"]
+              "width": 10, "height": 20, "alt": "sixteenth"}, "1/16"],
           ]
         }
       ],
@@ -147,14 +147,14 @@ Blockly.Blocks['music_start'] = {
           "src": "play.png",
           "width": 17,
           "height": 17,
-          "alt": "▶"
+          "alt": "▶",
         }
       ],
       "message1": "%1",
       "args1": [
         {
           "type": "input_statement",
-          "name": "STACK"
+          "name": "STACK",
         }
       ],
       "colour": 0,
