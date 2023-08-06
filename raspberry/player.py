@@ -226,7 +226,7 @@ def validateData(unvalidated_data):
         continue
       # Got a new pause.  Append any pending notes.
       if pending_notes:
-        assert len(pending_notes) < 8, "More than 8 notes at once"
+        assert len(pending_notes) <= 8, "More than 8 notes at once"
         validated_stream.append(list(pending_notes))
         pending_notes.clear()
       if datum != None:
