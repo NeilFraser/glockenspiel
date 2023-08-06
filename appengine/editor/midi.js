@@ -50,25 +50,104 @@ Midi.startParse = function(arrayBuffer) {
   const midi = MidiParser.parse(dataArray);
   const pitchTable = Midi.createPitchTable(Midi.allPitches(midi));
   Music.workspace.clear();
-  setTimeout(Midi.populate.bind(Midi, midi, pitchTable), 1);
+  for (let n = 1; n < midi['track'].length; n++) {
+    const track = Midi.parseTrack(midi, n);
+    setTimeout(Midi.populate.bind(Midi, track, n, pitchTable), 1);
+  }
 };
 
-Midi.populate = function(midi, pitchTable) {
-  const blocks = [];
+Midi.parseTrack = function(midi, n) {
   const timeDivision = midi['timeDivision'] * 2;
-  const stacks = [];
-
-  let time = 0;
-  const events = midi['track'][1]['event'];
+  const events = midi['track'][n]['event'];
+  const track = [];
   for (const event of events) {
-    time += event['deltaTime'];
+    const deltaTime = event['deltaTime'] / timeDivision;
+    let lastTrackItem = track[track.length - 1];
+    if (deltaTime > 0) {
+      if (typeof lastTrackItem === 'number') {
+        track[track.length - 1] += deltaTime;
+      } else {
+        track.push(deltaTime);
+        lastTrackItem = deltaTime;
+      }
+    }
     if (event['type'] === 9) {
       // Note on.
-      // Find (or create) a stack.
-      const stack = Midi.getStack(stacks, time);
+      const pitch = event['data'][0];
+      if (Array.isArray(lastTrackItem)) {
+        lastTrackItem.push(pitch);
+      } else {
+        track.push([pitch]);
+      }
+    }
+  }
+  for (const trackItem of track) {
+    if (Array.isArray(trackItem)) {
+      trackItem.sort();
+    }
+  }
+  return track;
+}
+
+Midi.populate = function(track, n, pitchTable) {
+  const stack = Midi.makeStack(n);
+  const blocks = [];
+
+  let time = 0;
+  for (const trackItem of track) {
+    if (Array.isArray(trackItem)) {
+      // Create note block.
+      const noteBlock = Music.workspace.newBlock('music_note');
+      blocks.push(noteBlock);
+      const parentConnectors = [noteBlock.getInput('PITCH').connection];
+      if (trackItem.length > 1) {
+        const listBlock = Music.workspace.newBlock('lists_create_with');
+        blocks.push(listBlock);
+        var node = Blockly.utils.xml.createElement('mutation');
+        node.setAttribute('items', trackItem.length);
+        listBlock.domToMutation(node);
+        parentConnectors.shift().connect(listBlock.outputConnection);
+        for (let i = 0; i < trackItem.length; i++) {
+          parentConnectors.push(listBlock.getInput('ADD' + i).connection);
+        }
+      }
+      for (const pitch of trackItem) {
+        // Create pitch block.
+        const pitchBlock = Music.workspace.newBlock('music_pitch');
+        blocks.push(pitchBlock);
+
+        // Set the pitch field.
+        const pitchTuple = pitchTable.get(pitch);
+        pitchBlock.setFieldValue(pitchTuple[0], 'PITCH');
+        let childBlock;
+        if (pitchTuple[1] === 0) {
+          // Natural note.
+          childBlock = pitchBlock;
+        } else {
+          // Accidental note (sharp/flat).
+          const arithmeticBlock = Music.workspace.newBlock('math_arithmetic');
+          const numberBlock = Music.workspace.newBlock('math_number');
+          blocks.push(arithmeticBlock, numberBlock);
+          arithmeticBlock.setFieldValue(pitchTuple[1] > 0 ? 'ADD' : 'MINUS', 'OP');
+          numberBlock.setFieldValue(Math.abs(pitchTuple[1]), 'NUM');
+          arithmeticBlock.getInput('A').connection.connect(pitchBlock.outputConnection);
+          arithmeticBlock.getInput('B').connection.connect(numberBlock.outputConnection);
+
+          childBlock = arithmeticBlock;
+        }
+        parentConnectors.shift().connect(childBlock.outputConnection);
+      }
+
+      // Record the duration field.
+      stack.lastNoteBlock = noteBlock;
+
+      // Connect note/pitch block to stack.
+      stack.connection.connect(noteBlock.previousConnection);
+      stack.connection = noteBlock.nextConnection;
+    } else {
+      // Duration.
       // Set duration of last block.
-      let deltaTime = (time - stack.lastBlockTime) / timeDivision;
-      stack.lastBlockTime = time;
+      let deltaTime = trackItem;
       if (stack.lastNoteBlock) {
         const timeSlice = Midi.timeSlice(deltaTime);
         const fraction = timeSlice[0];
@@ -88,66 +167,28 @@ Midi.populate = function(midi, pitchTable) {
         stack.connection.connect(restBlock.previousConnection);
         stack.connection = restBlock.nextConnection;
       }
-
-      // Create note and pitch blocks.
-      const noteBlock = Music.workspace.newBlock('music_note');
-      const pitchBlock = Music.workspace.newBlock('music_pitch');
-      blocks.push(noteBlock, pitchBlock);
-
-      // Set the pitch field.
-      const pitchTuple = pitchTable.get(event['data'][0]);
-      pitchBlock.setFieldValue(pitchTuple[0], 'PITCH');
-      if (pitchTuple[1] === 0) {
-        // Natural note.
-        noteBlock.getInput('PITCH').connection.connect(pitchBlock.outputConnection);
-      } else {
-        // Accidental note (sharp/flat).
-        const arithmeticBlock = Music.workspace.newBlock('math_arithmetic');
-        const numberBlock = Music.workspace.newBlock('math_number');
-        arithmeticBlock.setFieldValue(pitchTuple[1] > 0 ? 'ADD' : 'MINUS', 'OP');
-        numberBlock.setFieldValue(Math.abs(pitchTuple[1]), 'NUM');
-        arithmeticBlock.getInput('A').connection.connect(pitchBlock.outputConnection);
-        arithmeticBlock.getInput('B').connection.connect(numberBlock.outputConnection);
-        noteBlock.getInput('PITCH').connection.connect(arithmeticBlock.outputConnection);
-        blocks.push(arithmeticBlock, numberBlock);
-      }
-
-      // Record the duration field.
-      stack.lastNoteBlock = noteBlock;
-
-      // Connect note/pitch block to stack.
-      stack.connection.connect(noteBlock.previousConnection);
-      stack.connection = noteBlock.nextConnection;
     }
   }
-  for (var i = blocks.length - 1; i >= 0; i--) {
+
+  for (let i = blocks.length - 1; i >= 0; i--) {
     blocks[i].initSvg();
   }
   console.time('Rendering blocks');
-  for (var i = blocks.length - 1; i >= 0; i--) {
+  for (let i = blocks.length - 1; i >= 0; i--) {
     blocks[i].render();
   }
   console.timeEnd('Rendering blocks');
 };
 
-Midi.getStack = function(stacks, time) {
-  for (const stack of stacks) {
-    if (stack.lastBlockTime < time) {
-      return stack;
-    }
-  }
-  // No existing available stack found.  Create a new one.
+Midi.makeStack = function(n) {
   const startBlock = Music.workspace.newBlock('music_start');
-  startBlock.moveBy(stacks.length * 300 + 10, 10);
+  startBlock.moveBy(n * 300 + 10, 10);
   startBlock.initSvg();
   startBlock.render();
-  const stack = {
+  return {
     connection: startBlock.getInput('STACK').connection,
     lastNoteBlock: null,
-    lastBlockTime: 0,
   };
-  stacks.push(stack);
-  return stack;
 };
 
 /**
