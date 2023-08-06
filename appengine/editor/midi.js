@@ -52,7 +52,8 @@ Midi.startParse = function(arrayBuffer) {
   Music.workspace.clear();
   for (let n = 1; n < midi['track'].length; n++) {
     const track = Midi.parseTrack(midi, n);
-    setTimeout(Midi.populate.bind(Midi, track, n, pitchTable), 1);
+    const xml = Midi.trackToXml(track, n, pitchTable);
+    Music.setCode(Blockly.Xml.domToText(xml));
   }
 };
 
@@ -89,71 +90,127 @@ Midi.parseTrack = function(midi, n) {
   return track;
 }
 
-Midi.populate = function(track, n, pitchTable) {
-  const stack = Midi.makeStack(n);
-  const blocks = [];
+Midi.trackToXml = function(track, n, pitchTable) {
+  // <xml>
+  const xmlElement = Blockly.utils.xml.createElement('xml');
+  // <block type="music_start" x="10" y="10">
+  const blockStartElement = Blockly.utils.xml.createElement('block');
+  blockStartElement.setAttribute('type', 'music_start');
+  blockStartElement.setAttribute('x', n * 300 + 10);
+  blockStartElement.setAttribute('y', 10);
+  xmlElement.appendChild(blockStartElement);
+  // <statement name="STACK">
+  const statementStackElement = Blockly.utils.xml.createElement('statement');
+  statementStackElement.setAttribute('name', 'STACK');
+  blockStartElement.appendChild(statementStackElement);
+  let parentStackElement = statementStackElement;
+  let lastDurationElement = null;
 
-  let time = 0;
   for (const trackItem of track) {
     if (Array.isArray(trackItem)) {
-      // Create note block.
-      const noteBlock = Music.workspace.newBlock('music_note');
-      blocks.push(noteBlock);
-      const parentConnectors = [noteBlock.getInput('PITCH').connection];
-      if (trackItem.length > 1) {
-        const listBlock = Music.workspace.newBlock('lists_create_with');
-        blocks.push(listBlock);
-        var node = Blockly.utils.xml.createElement('mutation');
-        node.setAttribute('items', trackItem.length);
-        listBlock.domToMutation(node);
-        parentConnectors.shift().connect(listBlock.outputConnection);
-        for (let i = 0; i < trackItem.length; i++) {
-          parentConnectors.push(listBlock.getInput('ADD' + i).connection);
-        }
-      }
-      for (const pitch of trackItem) {
-        // Create pitch block.
-        const pitchBlock = Music.workspace.newBlock('music_pitch');
-        blocks.push(pitchBlock);
+      // Create note block with pitch block(s).
+      // <block type="music_note">
+      const blockNoteElement = Blockly.utils.xml.createElement('block');
+      blockNoteElement.setAttribute('type', 'music_note');
+      parentStackElement.appendChild(blockNoteElement);
+      // <field name="DURATION">1/2</field>
+      const durationFieldElement = Blockly.utils.xml.createElement('field');
+      durationFieldElement.setAttribute('name', 'DURATION');
+      blockNoteElement.appendChild(durationFieldElement);
+      lastDurationElement = durationFieldElement;
+      // <value name="PITCH">
+      const pitchValueElement = Blockly.utils.xml.createElement('value');
+      pitchValueElement.setAttribute('name', 'PITCH');
+      blockNoteElement.appendChild(pitchValueElement);
+      // <next>
+      const nextElement = Blockly.utils.xml.createElement('next');
+      blockNoteElement.appendChild(nextElement);
+      parentStackElement = nextElement;
+      const parentValueElements = [];
 
-        // Set the pitch field.
+      if (trackItem.length > 1) {
+        // <block type="lists_create_with">
+        const blockListElement = Blockly.utils.xml.createElement('block');
+        blockListElement.setAttribute('type', 'lists_create_with');
+        pitchValueElement.appendChild(blockListElement);
+        // <mutation items="2"/>
+        const mutationElement = Blockly.utils.xml.createElement('mutation');
+        mutationElement.setAttribute('items', trackItem.length);
+        blockListElement.appendChild(mutationElement);
+        for (let i = 0; i < trackItem.length; i++) {
+          // <value name="ADD0">
+          const addValueElement = Blockly.utils.xml.createElement('value');
+          addValueElement.setAttribute('name', 'ADD' + i);
+          blockListElement.appendChild(addValueElement);
+          parentValueElements.push(addValueElement);
+        }
+      } else {
+        parentValueElements.push(pitchValueElement);
+      }
+
+      for (const pitch of trackItem) {
+        // <block type="music_pitch">
+        const blockPitchElement = Blockly.utils.xml.createElement('block');
+        blockPitchElement.setAttribute('type', 'music_pitch');
+        // <field name="PITCH">E6</field>
+        const pitchFieldElement = Blockly.utils.xml.createElement('field');
+        pitchFieldElement.setAttribute('name', 'PITCH');
+        blockPitchElement.appendChild(pitchFieldElement);
         const pitchTuple = pitchTable.get(pitch);
-        pitchBlock.setFieldValue(pitchTuple[0], 'PITCH');
+        const pitchText = Blockly.utils.xml.createTextNode(pitchTuple[0]);
+        pitchFieldElement.appendChild(pitchText);
+
         let childBlock;
         if (pitchTuple[1] === 0) {
           // Natural note.
-          childBlock = pitchBlock;
+          childBlock = blockPitchElement;
         } else {
           // Accidental note (sharp/flat).
-          const arithmeticBlock = Music.workspace.newBlock('math_arithmetic');
-          const numberBlock = Music.workspace.newBlock('math_number');
-          blocks.push(arithmeticBlock, numberBlock);
-          arithmeticBlock.setFieldValue(pitchTuple[1] > 0 ? 'ADD' : 'MINUS', 'OP');
-          numberBlock.setFieldValue(Math.abs(pitchTuple[1]), 'NUM');
-          arithmeticBlock.getInput('A').connection.connect(pitchBlock.outputConnection);
-          arithmeticBlock.getInput('B').connection.connect(numberBlock.outputConnection);
+          // <block type="math_arithmetic">
+          const blockArithmeticElement = Blockly.utils.xml.createElement('block');
+          blockArithmeticElement.setAttribute('type', 'math_arithmetic');
+          // <field name="OP">MINUS</field>
+          const opFieldElement = Blockly.utils.xml.createElement('field');
+          opFieldElement.setAttribute('name', 'OP');
+          const minusText = Blockly.utils.xml.createTextNode(
+              pitchTuple[1] > 0 ? 'ADD' : 'MINUS');
+          opFieldElement.appendChild(minusText);
+          blockArithmeticElement.appendChild(opFieldElement);
+          // <value name="A">
+          const aValueElement = Blockly.utils.xml.createElement('value');
+          aValueElement.setAttribute('name', 'A');
+          blockArithmeticElement.appendChild(aValueElement);
+          aValueElement.appendChild(blockPitchElement);
+          // <value name="B">
+          const bValueElement = Blockly.utils.xml.createElement('value');
+          bValueElement.setAttribute('name', 'B');
+          blockArithmeticElement.appendChild(bValueElement);
+          // <block type="math_number">
+          const blockNumberElement = Blockly.utils.xml.createElement('block');
+          blockNumberElement.setAttribute('type', 'math_number');
+          // <field name="NUM">1</field>
+          const numFieldElement = Blockly.utils.xml.createElement('field');
+          numFieldElement.setAttribute('name', 'NUM');
+          const oneText = Blockly.utils.xml.createTextNode('1');
+          numFieldElement.appendChild(oneText);
+          blockNumberElement.appendChild(numFieldElement);
+          bValueElement.appendChild(blockNumberElement);
 
-          childBlock = arithmeticBlock;
+          childBlock = blockArithmeticElement;
         }
-        parentConnectors.shift().connect(childBlock.outputConnection);
+        parentValueElements.shift().appendChild(childBlock);
       }
-
-      // Record the duration field.
-      stack.lastNoteBlock = noteBlock;
-
-      // Connect note/pitch block to stack.
-      stack.connection.connect(noteBlock.previousConnection);
-      stack.connection = noteBlock.nextConnection;
     } else {
       // Duration.
       // Set duration of last block.
       let deltaTime = trackItem;
-      if (stack.lastNoteBlock) {
+      if (lastDurationElement) {
         const timeSlice = Midi.timeSlice(deltaTime);
         const fraction = timeSlice[0];
         deltaTime = timeSlice[1];
         if (fraction) {
-          stack.lastNoteBlock.setFieldValue(fraction, 'DURATION');
+          const durationText = Blockly.utils.xml.createTextNode(fraction);
+          lastDurationElement.appendChild(durationText);
         }
       }
       while (deltaTime >= 1/16) {
@@ -161,34 +218,25 @@ Midi.populate = function(track, n, pitchTable) {
         const timeSlice = Midi.timeSlice(deltaTime);
         const fraction = timeSlice[0];
         deltaTime = timeSlice[1];
-        const restBlock = Music.workspace.newBlock('music_rest');
-        restBlock.setFieldValue(fraction, 'DURATION');
-        blocks.push(restBlock);
-        stack.connection.connect(restBlock.previousConnection);
-        stack.connection = restBlock.nextConnection;
+        // <block type="music_rest">
+        const blockRestElement = Blockly.utils.xml.createElement('block');
+        blockRestElement.setAttribute('type', 'music_rest');
+        parentStackElement.appendChild(blockRestElement);
+        // <field name="DURATION">1/2</field>
+        const durationFieldElement = Blockly.utils.xml.createElement('field');
+        durationFieldElement.setAttribute('name', 'DURATION');
+        blockRestElement.appendChild(durationFieldElement);
+        const durationText = Blockly.utils.xml.createTextNode(fraction);
+        durationFieldElement.appendChild(durationText);
+        // <next>
+        const nextElement = Blockly.utils.xml.createElement('next');
+        blockRestElement.appendChild(nextElement);
+        parentStackElement = nextElement;
+        lastDurationElement = null;
       }
     }
   }
-
-  for (let i = blocks.length - 1; i >= 0; i--) {
-    blocks[i].initSvg();
-  }
-  console.time('Rendering blocks');
-  for (let i = blocks.length - 1; i >= 0; i--) {
-    blocks[i].render();
-  }
-  console.timeEnd('Rendering blocks');
-};
-
-Midi.makeStack = function(n) {
-  const startBlock = Music.workspace.newBlock('music_start');
-  startBlock.moveBy(n * 300 + 10, 10);
-  startBlock.initSvg();
-  startBlock.render();
-  return {
-    connection: startBlock.getInput('STACK').connection,
-    lastNoteBlock: null,
-  };
+  return xmlElement;
 };
 
 /**
