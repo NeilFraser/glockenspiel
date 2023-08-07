@@ -148,7 +148,7 @@ Music.init = function() {
       if (Blockly.utils.dom.hasClass(Music.editorTabs[selectedIndex],'tab-disabled')) {
         return;
       }
-      for (var i = 0; i < Music.editorTabs.length; i++) {
+      for (let i = 0; i < Music.editorTabs.length; i++) {
         if (selectedIndex === i) {
           Blockly.utils.dom.addClass(Music.editorTabs[i], 'tab-selected');
         } else {
@@ -160,29 +160,29 @@ Music.init = function() {
   }
   Music.editorTabs = Array.prototype.slice.call(
       document.querySelectorAll('#editorBar>.tab'));
-  for (var i = 0; i < Music.editorTabs.length; i++) {
+  for (let i = 0; i < Music.editorTabs.length; i++) {
     Music.bindClick(Music.editorTabs[i], tabHandler(i));
   }
 
-  var paddingBox = document.getElementById('paddingBox');
-  var staveBox = document.getElementById('staveBox');
-  var musicBox = document.getElementById('musicBox');
-  var tabDiv = document.getElementById('tabarea');
-  var blocklyDiv = document.getElementById('blockly');
-  var editorDiv = document.getElementById('editor');
-  var divs = [blocklyDiv, editorDiv];
-  var onresize = function(e) {
-    var top = paddingBox.offsetTop;
+  const paddingBox = document.getElementById('paddingBox');
+  const staveBox = document.getElementById('staveBox');
+  const musicBox = document.getElementById('musicBox');
+  const tabDiv = document.getElementById('tabarea');
+  const blocklyDiv = document.getElementById('blockly');
+  const editorDiv = document.getElementById('editor');
+  const divs = [blocklyDiv, editorDiv];
+  const onresize = function(e) {
+    const top = paddingBox.offsetTop;
     staveBox.style.top = top + 'px';
     musicBox.style.top = top + 'px';
     tabDiv.style.top = (top - window.pageYOffset) + 'px';
     tabDiv.style.left = '420px';
     tabDiv.style.width = (window.innerWidth - 440) + 'px';
-    var divTop =
+    const divTop =
         Math.max(0, top + tabDiv.offsetHeight - window.pageYOffset) + 'px';
-    var divLeft = '420px';
-    var divWidth = (window.innerWidth - 440) + 'px';
-    for (var i = 0, div; (div = divs[i]); i++) {
+    const divLeft = '420px';
+    const divWidth = (window.innerWidth - 440) + 'px';
+    for (const div of divs) {
       div.style.top = divTop;
       div.style.left = divLeft;
       div.style.width = divWidth;
@@ -196,9 +196,9 @@ Music.init = function() {
   onresize(null);
 
   // Inject JS editor.
-  var ace = window['ace'];
+  const ace = window['ace'];
   ace['require']('ace/ext/language_tools');
-  var editor = ace['edit']('editor');
+  const editor = ace['edit']('editor');
   Music.editor = editor;
   editor['setTheme']('ace/theme/chrome');
   editor['setShowPrintMargin'](false);
@@ -206,7 +206,7 @@ Music.init = function() {
     'enableBasicAutocompletion': true,
     'enableLiveAutocompletion': true
   });
-  var session = editor['getSession']();
+  const session = editor['getSession']();
   session['setMode']('ace/mode/javascript');
   session['setTabSize'](2);
   session['setUseSoftTabs'](true);
@@ -215,7 +215,7 @@ Music.init = function() {
   editor['setValue']('', -1);
 
   // Inject Blockly
-  var toolbox = document.getElementById('toolbox');
+  const toolbox = document.getElementById('toolbox');
   Music.workspace = Blockly.inject('blockly',
       {'disable': false,
        'media': '../third-party/blockly/media/',
@@ -238,14 +238,14 @@ Music.init = function() {
       Object.values(Music.fromMidi).join(','));
 
   // Initialize the slider.
-  var sliderSvg = document.getElementById('slider');
+  const sliderSvg = document.getElementById('slider');
   Music.speedSlider = new Slider(10, 35, 130, sliderSvg, Music.sliderChange);
 
   if (window.location.hash.length > 1) {
     // An href with #key triggers an AJAX call to retrieve saved blocks.
     BlocklyStorage.retrieveXml(window.location.hash.substring(1));
   } else {
-    var xml = document.getElementById('defaultXml');
+    const xml = document.getElementById('defaultXml');
     // Clear the workspace to avoid merge.
     Music.workspace.clear();
     Blockly.Xml.domToWorkspace(xml, Music.workspace);
@@ -281,24 +281,24 @@ window.addEventListener('load', Music.init);
  * @param {number} index Which tab is now active (0-1).
  */
 Music.changeTab = function(index) {
-  var BLOCKS = 0;
-  var JAVASCRIPT = 1;
+  const BLOCKS = 0;
+  const JAVASCRIPT = 1;
   // Show the correct tab contents.
-  var names = ['blockly', 'editor'];
-  for (var i = 0, name; (name = names[i]); i++) {
-    var div = document.getElementById(name);
+  const tabNames = ['blockly', 'editor'];
+  for (let i = 0, name; (name = tabNames[i]); i++) {
+    const div = document.getElementById(name);
     div.style.visibility = (i === index) ? 'visible' : 'hidden';
   }
   // Show/hide Blockly divs.
-  var names = ['.blocklyTooltipDiv', '.blocklyToolboxDiv'];
-  for (var i = 0, name; (name = names[i]); i++) {
-    var div = document.querySelector(name);
+  const divNames = ['.blocklyTooltipDiv', '.blocklyToolboxDiv'];
+  for (let i = 0, name; (name = divNames[i]); i++) {
+    const div = document.querySelector(name);
     div.style.visibility = (index === BLOCKS) ? 'visible' : 'hidden';
   }
   Blockly.hideChaff();
   if (index === JAVASCRIPT && Music.blocksEnabled_) {
     // Remove keywords not supported by the JS-Interpreter.
-    var keywords = Music.editor['getSession']()['getMode']()['$highlightRules']['$keywordList'];
+    const keywords = Music.editor['getSession']()['getMode']()['$highlightRules']['$keywordList'];
     if (keywords) {
       keywords.splice(0, Infinity, 'arguments', 'this', 'NaN', 'Math', 'JSON',
           'parseInt', 'parseFloat', 'isNaN', 'isFinite', 'eval', 'String',
@@ -309,7 +309,7 @@ Music.changeTab = function(index) {
           'undefined', 'Infinity', 'null', 'false', 'true');
     }
     // Synchronize the JS editor.
-    var code = Music.blocksToCode();
+    let code = Music.blocksToCode();
     code = code.replace(/, 'block_id_([^']+)'/g, '');
     Music.ignoreEditorChanges_ = true;
     Music.editor['setValue'](code, -1);
@@ -328,12 +328,12 @@ Music.blocksToCode = function() {
   var header = '';
   // Add constants for all available MIDI pitches.
   var pitchConstants = [];
-  for (var midi in Music.fromMidi) {
+  for (const midi in Music.fromMidi) {
     pitchConstants.push(Music.fromMidi[midi] + '=' + midi);
   }
   header += 'var ' + pitchConstants.join(', ') + ';\n\n';
   // Add 'runThread' functions to the start.
-  for (var i = 1; i <= Music.startCount; i++) {
+  for (let i = 1; i <= Music.startCount; i++) {
     header += 'runThread(start' + i + ');\n';
   }
   return header + '\n' + code;
@@ -433,9 +433,9 @@ Music.importSounds = function() {
  * Register the sounds.
  */
 Music.registerSounds = function() {
-  var assetsPath = '../third-party/soundfont/';
-  var sounds = [];
-  for (var midi in Music.fromMidi) {
+  const assetsPath = '../third-party/soundfont/';
+  const sounds = [];
+  for (const midi in Music.fromMidi) {
     sounds.push({'src': Music.fromMidi[midi] + '.mp3', id: midi});
   }
   createjs.Sound.registerSounds(sounds, assetsPath);
@@ -447,7 +447,7 @@ Music.registerSounds = function() {
 Music.importBabel = function() {
   //<script type="text/javascript"
   //  src="../third-party/babel.min.js"></script>
-  var script = document.createElement('script');
+  const script = document.createElement('script');
   script.type = 'text/javascript';
   script.src = '../third-party/babel.min.js';
   document.head.appendChild(script);
@@ -499,14 +499,14 @@ Music.drawStaveBox = function() {
   Music.drawStave(Blockly.utils.math.clamp(count, 1, 4));
 
   // Repopulate the music from the transcripts.
-  for (var i = 0; i < Math.min(4, Music.transcriptVoices.length); i++) {
+  for (let i = 0; i < Math.min(4, Music.transcriptVoices.length); i++) {
     var transcriptVoice = Music.transcriptVoices[i];
     var clock32 = 0;
-    for (var j = 0, tuple; (tuple = transcriptVoice[j]); j++) {
-      var pitches = tuple[0];
-      var duration = tuple[1];
-      for (var k = 0; k < pitches.length; k++) {
-        Music.drawNote(i + 1, clock32, pitches[k], duration);
+    for (const tuple of transcriptVoice) {
+      const pitches = tuple[0];
+      const duration = tuple[1];
+      for (const pitch of pitches) {
+        Music.drawNote(i + 1, clock32, pitch, duration);
       }
       clock32 += duration * 32;
     }
@@ -521,7 +521,7 @@ Music.drawStave = function(n) {
   Music.staveCount = n;
   var staveBox = document.getElementById('staveBox');
   // <img src="stave.png" class="stave" style="top: 100px">
-  for (var i = 1; i <= n; i++) {
+  for (let i = 1; i <= n; i++) {
     var top = Math.round(Music.staveTop_(i, n));
     var img = document.createElement('img');
     img.src = 'stave.png';
@@ -563,8 +563,7 @@ Music.staveTop_ = function(i, n) {
 Music.drawNote = function(stave, clock32, pitch, duration) {
   // Split notes/rests with odd durations into legal quanta.
   var legalDurations = [1, 0.5, 0.25, 0.125, 0.0625, 0.03125];
-  for (var i = 0; i < legalDurations.length; i++) {
-    var legalDuration = legalDurations[i];
+  for (const legalDuration of legalDurations) {
     if (duration === legalDuration) {
       break;  // Valid note.
     }
@@ -682,8 +681,8 @@ Music.makeLedgerLine_ = function(top, left, duration, container) {
 Music.drawNote.heights_ = {};
 (function() {
   var height = 40.5;
-  for (var midi in Music.fromMidi) {
-    var note = Music.fromMidi[midi];
+  for (const midi in Music.fromMidi) {
+    const note = Music.fromMidi[midi];
     Music.drawNote.heights_[midi] = height;
     if (note.indexOf('b') === -1) {
       height -= 4.5;
@@ -695,9 +694,9 @@ Music.drawNote.heights_ = {};
  * Show the help pop-up.
  */
 Music.showHelp = function() {
-  var help = document.getElementById('dialogHelp');
-  var button = document.getElementById('helpButton');
-  var style = {
+  const help = document.getElementById('dialogHelp');
+  const button = document.getElementById('helpButton');
+  const style = {
     width: '50%',
     left: '25%',
     top: '5em'
@@ -730,15 +729,15 @@ Music.disableExtraStarts = function(e) {
   if (e instanceof Blockly.Events.Create) {
     var startBlocks = [];
     var blocks = Music.workspace.getTopBlocks(false);
-    for (var i = 0, block; (block = blocks[i]); i++) {
+    for (const block of blocks) {
       if (block.type === 'music_start' && !block.isInsertionMarker()) {
         startBlocks.push(block);
       }
     }
     if (maxStarts < startBlocks.length) {
       // Too many start blocks.  Disable any new ones.
-      for (var i = 0, id; (id = e.ids[i]); i++) {
-        for (var j = 0, startBlock; (startBlock = startBlocks[j]); j++) {
+      for (const id of e.ids) {
+        for (const startBlock of startBlocks) {
           if (startBlock.id === id) {
             startBlock.setDisabled(true);
           }
@@ -757,7 +756,7 @@ Music.disableExtraStarts = function(e) {
     var startBlocksEnabled = [];
     var startBlocksDisabled = [];
     var blocks = Music.workspace.getTopBlocks(true);
-    for (var i = 0, block; (block = blocks[i]); i++) {
+    for (const block of blocks) {
       if (block.type === 'music_start') {
         (block.isEnabled() ? startBlocksEnabled : startBlocksDisabled)
             .push(block);
@@ -789,7 +788,7 @@ Music.disableExtraStarts = function(e) {
 Music.reset = function() {
   // Kill any task.
   clearTimeout(Music.pid);
-  for (var i = 0, thread; (thread = Music.threads[i]); i++) {
+  for (const thread of Music.threads) {
     Music.stopSound(thread);
   }
   Music.interpreter = null;
@@ -929,13 +928,18 @@ Music.getCode = function() {
 
 /**
  * Set the given code (XML or JS) to the editor (Blockly or ACE).
- * @param {string} code XML or JS code.
+ * @param {string|!Element} code XML or JS code.
  */
 Music.setCode = function(code) {
-  try {
-    var xml = Blockly.Xml.textToDom(code);
-  } catch (e) {
-    xml = null;
+  var xml;
+  if (code instanceof Element) {
+    xml = code;
+  } else {
+    try {
+      xml = Blockly.Xml.textToDom(code);
+    } catch (e) {
+      xml = null;
+    }
   }
   if (xml) {
     // Blockly editor.
@@ -1026,7 +1030,7 @@ Music.tick = function() {
       // Take a copy of the threads since executing a thread could add more
       // threads or splice itself out of the list.
       var threadCopy = Music.threads.concat();
-      for (var i = 0, thread; (thread = threadCopy[i]); i++) {
+      for (const thread of threadCopy) {
         if (thread.pauseUntil32nds <= Music.clock32nds) {
           Music.executeChunk_(thread);
         }
@@ -1083,8 +1087,7 @@ Music.executeChunk_ = function(thread) {
  * @param {!Music.Thread} thread Thread object.
  */
 Music.stopSound = function(thread) {
-  for (var i = 0; i < thread.sounds.length; i++) {
-    var sound = thread.sounds[i];
+  for (const sound of thread.sounds) {
     // Firefox requires 100ms to start a note playing, so delaying the end
     // eliminates the staccato.  Adds a nice smoothness to Chrome.
     setTimeout(sound['stop'].bind(sound), 100);
@@ -1096,27 +1099,28 @@ Music.stopSound = function(thread) {
  * Scroll the music display horizontally to the current time.
  */
 Music.autoScroll = function() {
-  var musicBox = document.getElementById('musicBox');
-  var musicContainer = document.getElementById('musicContainer');
-  var musicContainerWidth = document.getElementById('musicContainerWidth');
+  const musicBox = document.getElementById('musicBox');
+  const musicContainer = document.getElementById('musicContainer');
+  const musicContainerWidth = document.getElementById('musicContainerWidth');
 
   // Ensure a half-screenfull of blank music to the right of last note.
-  var LEFT_PADDING = 10;
-  var WHOLE_WIDTH = 256;
-  var RIGHT_PADDING = 100;
+  const LEFT_PADDING = 10;
+  const WHOLE_WIDTH = 256;
+  const RIGHT_PADDING = 100;
+  let newWidth;
   if (Music.clock32nds) {
-    var newWidth = Math.round(Music.clock32nds / 32 * WHOLE_WIDTH +
+    newWidth = Math.round(Music.clock32nds / 32 * WHOLE_WIDTH +
                               LEFT_PADDING + RIGHT_PADDING);
   } else {
-    var newWidth = musicBox.scrollWidth + RIGHT_PADDING;
+    newWidth = musicBox.scrollWidth + RIGHT_PADDING;
   }
   musicContainerWidth.width = newWidth;
   // Draw a bar at one whole note intervals on all staves.
   while (Music.barCount < Math.floor(newWidth / WHOLE_WIDTH)) {
     Music.barCount++;
-    for (var j = 1; j <= Music.staveCount; j++) {
-      var top = Music.staveTop_(j, Music.staveCount);
-      var img = document.createElement('img');
+    for (let j = 1; j <= Music.staveCount; j++) {
+      const top = Music.staveTop_(j, Music.staveCount);
+      const img = document.createElement('img');
       img.src = 'black1x1.gif';
       img.className = 'barLine';
       img.style.top = (top + 18) + 'px';
@@ -1125,7 +1129,7 @@ Music.autoScroll = function() {
     }
   }
 
-  var musicBoxMid = (400 - 36) / 2;  // There's a 36px margin for the clef.
+  const musicBoxMid = (400 - 36) / 2;  // There's a 36px margin for the clef.
   musicBox.scrollLeft = Music.clock32nds * (WHOLE_WIDTH / 32) - musicBoxMid;
 };
 
@@ -1160,7 +1164,7 @@ Music.play = function(duration, pitches, opt_id) {
   }
   // Make a record of this note.
   Music.activeThread.appendTranscript(pitches, duration);
-  for (var i = 0; i < pitches.length; i++) {
+  for (let i = 0; i < pitches.length; i++) {
     var pitch = Math.round(pitches[i]);
     if (!Music.fromMidi[pitch]) {
       console.warn('MIDI note out of range (81-105): ' + pitch);
@@ -1289,7 +1293,7 @@ Music.voicesToStream = function(voices) {
   // Initialize voice pointers and voice clocks.
   var pointers = [];
   var pauseUntil32nds = [];
-  for (var i = 0; i < voices.length; i++) {
+  for (let i = 0; i < voices.length; i++) {
     pointers.push(0);
     pauseUntil32nds.push(0);
   }
@@ -1298,7 +1302,7 @@ Music.voicesToStream = function(voices) {
     clock32nds++;
     tickAccumulator++;
     var done = true;
-    for (var i = 0, voice; (voice = voices[i]); i++) {
+    for (let i = 0, voice; (voice = voices[i]); i++) {
       if (pauseUntil32nds[i] > clock32nds) {
         // A note on this voice is still playing.
         done = false;
@@ -1311,8 +1315,7 @@ Music.voicesToStream = function(voices) {
         done = false;
         var notes = tuple[0];
         var duration = tuple[1];
-        for (var j = 0; j < notes.length; j++) {
-          var note = notes[j];
+        for (const note of notes) {
           if (note !== Music.REST) {
             newNotesSet.add(note);
           }
@@ -1365,7 +1368,7 @@ Music.Thread.prototype.appendTranscript = function(pitches, duration) {
   if (this.stave === undefined) {
     // Find all stave numbers currently in use.
     var staves = [];
-    for (var i = 0, thread; (thread = Music.threads[i]); i++) {
+    for (const thread of Music.threads) {
       if (thread.stave !== undefined) {
         staves[thread.stave] = true;
       }
@@ -1383,7 +1386,7 @@ Music.Thread.prototype.appendTranscript = function(pitches, duration) {
     // Compute length of existing content in this transcript stave.
     var existingDuration = 0;
     var transcript = Music.transcriptVoices[i - 1];
-    for (var j = 0; j < transcript.length; j++) {
+    for (let j = 0; j < transcript.length; j++) {
       existingDuration += transcript[j][1];
     }
     // Add pause to line up this transcript stave with the clock.

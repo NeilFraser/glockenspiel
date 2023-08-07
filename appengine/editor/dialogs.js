@@ -57,19 +57,19 @@ MusicDialogs.showDialog = function(content, origin, animate, modal, style,
   MusicDialogs.isDialogVisible_ = true;
   MusicDialogs.dialogOrigin_ = origin;
   MusicDialogs.dialogDispose_ = disposeFunc;
-  var dialog = document.getElementById('dialog');
-  var shadow = document.getElementById('dialogShadow');
-  var border = document.getElementById('dialogBorder');
+  const dialog = document.getElementById('dialog');
+  const shadow = document.getElementById('dialogShadow');
+  const border = document.getElementById('dialogBorder');
 
   // Copy all the specified styles to the dialog.
-  for (var name in style) {
+  for (const name in style) {
     dialog.style[name] = style[name];
   }
   if (modal) {
     shadow.style.visibility = 'visible';
     shadow.style.opacity = 0.3;
     shadow.style.zIndex = 9;
-    var header = document.createElement('div');
+    const header = document.createElement('div');
     header.id = 'dialogHeader';
     dialog.appendChild(header);
     MusicDialogs.dialogMouseDownWrapper_ =
@@ -126,7 +126,7 @@ MusicDialogs.dialogMouseDown_ = function(e) {
   }
   // Left click (or middle click).
   // Record the starting offset between the current location and the mouse.
-  var dialog = document.getElementById('dialog');
+  const dialog = document.getElementById('dialog');
   MusicDialogs.dialogStartX_ = dialog.offsetLeft - e.clientX;
   MusicDialogs.dialogStartY_ = dialog.offsetTop - e.clientY;
 
@@ -144,9 +144,9 @@ MusicDialogs.dialogMouseDown_ = function(e) {
  * @private
  */
 MusicDialogs.dialogMouseMove_ = function(e) {
-  var dialog = document.getElementById('dialog');
-  var dialogLeft = MusicDialogs.dialogStartX_ + e.clientX;
-  var dialogTop = MusicDialogs.dialogStartY_ + e.clientY;
+  const dialog = document.getElementById('dialog');
+  let dialogLeft = MusicDialogs.dialogStartX_ + e.clientX;
+  let dialogTop = MusicDialogs.dialogStartY_ + e.clientY;
   dialogTop = Math.max(dialogTop, 0);
   dialogTop = Math.min(dialogTop, window.innerHeight - dialog.offsetHeight);
   dialogLeft = Math.max(dialogLeft, 0);
@@ -176,6 +176,7 @@ MusicDialogs.dialogUnbindDragEvents_ = function() {
  *     Requires that origin was not null when dialog was opened.
  */
 MusicDialogs.hideDialog = function(opt_animate) {
+  document.body.style.cursor = '';
   if (!MusicDialogs.isDialogVisible_) {
     return;
   }
@@ -188,16 +189,16 @@ MusicDialogs.hideDialog = function(opt_animate) {
   MusicDialogs.isDialogVisible_ = false;
   MusicDialogs.dialogDispose_ && MusicDialogs.dialogDispose_();
   MusicDialogs.dialogDispose_ = null;
-  var origin = (opt_animate === false) ? null : MusicDialogs.dialogOrigin_;
-  var dialog = document.getElementById('dialog');
-  var shadow = document.getElementById('dialogShadow');
+  const origin = (opt_animate === false) ? null : MusicDialogs.dialogOrigin_;
+  const dialog = document.getElementById('dialog');
+  const shadow = document.getElementById('dialogShadow');
 
   shadow.style.opacity = 0;
 
   function endResult() {
     shadow.style.zIndex = -1;
     shadow.style.visibility = 'hidden';
-    var border = document.getElementById('dialogBorder');
+    const border = document.getElementById('dialogBorder');
     border.style.visibility = 'hidden';
   }
   if (origin && dialog) {
@@ -211,12 +212,12 @@ MusicDialogs.hideDialog = function(opt_animate) {
   }
   dialog.style.visibility = 'hidden';
   dialog.style.zIndex = -1;
-  var header = document.getElementById('dialogHeader');
+  const header = document.getElementById('dialogHeader');
   if (header) {
     header.parentNode.removeChild(header);
   }
   while (dialog.firstChild) {
-    var content = dialog.firstChild;
+    const content = dialog.firstChild;
     content.className += ' dialogHiddenContent';
     document.body.appendChild(content);
   }
@@ -233,8 +234,8 @@ MusicDialogs.matchBorder_ = function(element, animate, opacity) {
   if (!element) {
     return;
   }
-  var border = document.getElementById('dialogBorder');
-  var bBox = MusicDialogs.getBBox_(element);
+  const border = document.getElementById('dialogBorder');
+  const bBox = MusicDialogs.getBBox_(element);
   function change() {
     border.style.width = bBox.width + 'px';
     border.style.height = bBox.height + 'px';
@@ -259,14 +260,14 @@ MusicDialogs.matchBorder_ = function(element, animate, opacity) {
  * @private
  */
 MusicDialogs.getBBox_ = function(element) {
-  var xy = Blockly.utils.style.getPageOffset(element);
-  var box = {
+  const xy = Blockly.utils.style.getPageOffset(element);
+  const box = {
     x: xy.x,
     y: xy.y
   };
   if (element.getBBox) {
     // SVG element.
-    var bBox = element.getBBox();
+    const bBox = element.getBBox();
     box.height = bBox.height;
     box.width = bBox.width;
   } else {
@@ -283,17 +284,17 @@ MusicDialogs.getBBox_ = function(element) {
  * @param {string} message Text to alert.
  */
 MusicDialogs.storageAlert = function(origin, message) {
-  var container = document.getElementById('containerStorage');
+  const container = document.getElementById('containerStorage');
   container.textContent = '';
-  var lines = message.split('\n');
-  for (var i = 0; i < lines.length; i++) {
-    var p = document.createElement('p');
-    p.appendChild(document.createTextNode(lines[i]));
+  const lines = message.split('\n');
+  for (const line of lines) {
+    const p = document.createElement('p');
+    p.appendChild(document.createTextNode(line));
     container.appendChild(p);
   }
 
-  var content = document.getElementById('dialogStorage');
-  var style = {
+  const content = document.getElementById('dialogStorage');
+  const style = {
     width: '50%',
     left: '25%',
     top: '5em'
@@ -332,4 +333,18 @@ MusicDialogs.startDialogKeyDown = function() {
 MusicDialogs.stopDialogKeyDown = function() {
   document.body.removeEventListener('keydown',
       MusicDialogs.dialogKeyDown_, true);
+};
+
+/**
+ * Show a modal to prevent user interaction while loading blocks.
+ */
+MusicDialogs.showLoading = function() {
+  const loadingContent = document.getElementById('dialogLoading');
+  const style = {
+    width: '33%',
+    left: '33%',
+    top: '5em'
+  };
+  MusicDialogs.showDialog(loadingContent, null, false, true, style, null);
+  document.body.style.cursor = 'wait';
 };

@@ -37,8 +37,17 @@ Midi.doneUpload = function() {
   if (!fileInput.files.length) return;
   const file = fileInput.files[0];
   file.arrayBuffer()
-      .then(Midi.startParse, (e) => alert('Upload failed.\n' + e));
-  Music.resetButtonClick();
+      .then(Midi.fileLoaded, (e) => alert('Upload failed.\n' + e));
+};
+
+/**
+ * File contents has been loaded and is in an ArrayBuffer.
+ * @param {ArrayBuffer} arrayBuffer Raw file data.
+ */
+Midi.fileLoaded = function(arrayBuffer) {
+  MusicDialogs.showLoading();
+  // Wait for background to start fading.
+  setTimeout(Midi.startParse.bind(Midi, arrayBuffer), 50);
 };
 
 /**
@@ -46,15 +55,20 @@ Midi.doneUpload = function() {
  * @param {ArrayBuffer} arrayBuffer Raw file data.
  */
 Midi.startParse = function(arrayBuffer) {
+  Music.resetButtonClick();
+  Music.workspace.clear();
   const dataArray = new Uint8Array(arrayBuffer);
   const midi = MidiParser.parse(dataArray);
   const pitchTable = Midi.createPitchTable(Midi.allPitches(midi));
-  Music.workspace.clear();
+  const xmlChunks = [];
   for (let n = 1; n < midi['track'].length; n++) {
     const track = Midi.parseTrack(midi, n);
-    const xml = Midi.trackToXml(track, n, pitchTable);
-    Music.setCode(Blockly.Xml.domToText(xml));
+    xmlChunks.push(Midi.trackToXml(track, n, pitchTable));
   }
+  for (const xml of xmlChunks) {
+    Music.setCode(xml);
+  }
+  MusicDialogs.hideDialog();
 };
 
 Midi.parseTrack = function(midi, n) {

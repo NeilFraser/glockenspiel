@@ -246,7 +246,7 @@ button.primary {
 
 .splash {
   transition-property: height, opacity, width, margin;
-  transition-duration: .3s;
+  transition-duration: 0.3s;
   opacity: 0;
 }
 

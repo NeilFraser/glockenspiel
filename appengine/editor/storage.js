@@ -27,7 +27,7 @@ BlocklyStorage.link = function() {
     BlocklyStorage.alert_('Cannot submit XHR from "file:" URL.');
     return;
   }
-  var code = Music.getCode();
+  const code = Music.getCode();
   BlocklyStorage.makeRequest_('/storage', 'xml=' + encodeURIComponent(code),
       BlocklyStorage.handleLinkResponse_);
 };
@@ -37,6 +37,7 @@ BlocklyStorage.link = function() {
  * @param {string} key Key to XML, obtained from href.
  */
 BlocklyStorage.retrieveXml = function(key) {
+  MusicDialogs.showLoading();
   BlocklyStorage.makeRequest_('/storage', 'key=' + encodeURIComponent(key),
       BlocklyStorage.handleRetrieveXmlResponse_);
 };
@@ -84,7 +85,7 @@ BlocklyStorage.makeRequest_ = function(url, data, onSuccess) {
  * @private
  */
 BlocklyStorage.handleLinkResponse_ = function() {
-  var data = this.responseText.trim();
+  const data = this.responseText.trim();
   window.location.hash = data;
   BlocklyStorage.alert_(BlocklyStorage.LINK_ALERT.replace('%1',
       window.location.href.replace('/editor/index.html#', '/#')));
@@ -97,12 +98,13 @@ BlocklyStorage.handleLinkResponse_ = function() {
  * @private
  */
 BlocklyStorage.handleRetrieveXmlResponse_ = function() {
-  var data = this.responseText.trim();
+  const data = this.responseText.trim();
   if (!data.length) {
     BlocklyStorage.alert_(BlocklyStorage.HASH_ERROR.replace('%1',
         window.location.hash));
   } else {
     Music.setCode(data);
+    MusicDialogs.hideDialog();
   }
   BlocklyStorage.startCode = Music.getCode();
 };
@@ -113,7 +115,7 @@ BlocklyStorage.handleRetrieveXmlResponse_ = function() {
  * @private
  */
 BlocklyStorage.alert_ = function(message) {
-  var linkButton = document.getElementById('linkButton');
+  const linkButton = document.getElementById('linkButton');
   MusicDialogs.storageAlert(linkButton, message);
 };
 
