@@ -108,15 +108,15 @@ Midi.trackToXml = function(track, n, pitchTable) {
   // <xml>
   const xmlElement = Blockly.utils.xml.createElement('xml');
   // <block type="music_start" x="10" y="10">
-  const blockStartElement = Blockly.utils.xml.createElement('block');
-  blockStartElement.setAttribute('type', 'music_start');
-  blockStartElement.setAttribute('x', n * 300 + 10);
-  blockStartElement.setAttribute('y', 10);
-  xmlElement.appendChild(blockStartElement);
+  const startBlockElement = Blockly.utils.xml.createElement('block');
+  startBlockElement.setAttribute('type', 'music_start');
+  startBlockElement.setAttribute('x', n * 300 + 10);
+  startBlockElement.setAttribute('y', 10);
+  xmlElement.appendChild(startBlockElement);
   // <statement name="STACK">
   const statementStackElement = Blockly.utils.xml.createElement('statement');
   statementStackElement.setAttribute('name', 'STACK');
-  blockStartElement.appendChild(statementStackElement);
+  startBlockElement.appendChild(statementStackElement);
   let parentStackElement = statementStackElement;
   let lastDurationElement = null;
 
@@ -124,38 +124,38 @@ Midi.trackToXml = function(track, n, pitchTable) {
     if (Array.isArray(trackItem)) {
       // Create note block with pitch block(s).
       // <block type="music_note">
-      const blockNoteElement = Blockly.utils.xml.createElement('block');
-      blockNoteElement.setAttribute('type', 'music_note');
-      parentStackElement.appendChild(blockNoteElement);
+      const noteBlockElement = Blockly.utils.xml.createElement('block');
+      noteBlockElement.setAttribute('type', 'music_note');
+      parentStackElement.appendChild(noteBlockElement);
       // <field name="DURATION">1/2</field>
       const durationFieldElement = Blockly.utils.xml.createElement('field');
       durationFieldElement.setAttribute('name', 'DURATION');
-      blockNoteElement.appendChild(durationFieldElement);
+      noteBlockElement.appendChild(durationFieldElement);
       lastDurationElement = durationFieldElement;
       // <value name="PITCH">
       const pitchValueElement = Blockly.utils.xml.createElement('value');
       pitchValueElement.setAttribute('name', 'PITCH');
-      blockNoteElement.appendChild(pitchValueElement);
+      noteBlockElement.appendChild(pitchValueElement);
       // <next>
       const nextElement = Blockly.utils.xml.createElement('next');
-      blockNoteElement.appendChild(nextElement);
+      noteBlockElement.appendChild(nextElement);
       parentStackElement = nextElement;
       const parentValueElements = [];
 
       if (trackItem.length > 1) {
         // <block type="lists_create_with">
-        const blockListElement = Blockly.utils.xml.createElement('block');
-        blockListElement.setAttribute('type', 'lists_create_with');
-        pitchValueElement.appendChild(blockListElement);
+        const listBlockElement = Blockly.utils.xml.createElement('block');
+        listBlockElement.setAttribute('type', 'lists_create_with');
+        pitchValueElement.appendChild(listBlockElement);
         // <mutation items="2"/>
         const mutationElement = Blockly.utils.xml.createElement('mutation');
         mutationElement.setAttribute('items', trackItem.length);
-        blockListElement.appendChild(mutationElement);
+        listBlockElement.appendChild(mutationElement);
         for (let i = 0; i < trackItem.length; i++) {
           // <value name="ADD0">
           const addValueElement = Blockly.utils.xml.createElement('value');
           addValueElement.setAttribute('name', 'ADD' + i);
-          blockListElement.appendChild(addValueElement);
+          listBlockElement.appendChild(addValueElement);
           parentValueElements.push(addValueElement);
         }
       } else {
@@ -164,12 +164,12 @@ Midi.trackToXml = function(track, n, pitchTable) {
 
       for (const pitch of trackItem) {
         // <block type="music_pitch">
-        const blockPitchElement = Blockly.utils.xml.createElement('block');
-        blockPitchElement.setAttribute('type', 'music_pitch');
+        const pitchBlockElement = Blockly.utils.xml.createElement('block');
+        pitchBlockElement.setAttribute('type', 'music_pitch');
         // <field name="PITCH">E6</field>
         const pitchFieldElement = Blockly.utils.xml.createElement('field');
         pitchFieldElement.setAttribute('name', 'PITCH');
-        blockPitchElement.appendChild(pitchFieldElement);
+        pitchBlockElement.appendChild(pitchFieldElement);
         const pitchTuple = pitchTable.get(pitch);
         const pitchText = Blockly.utils.xml.createTextNode(pitchTuple[0]);
         pitchFieldElement.appendChild(pitchText);
@@ -177,40 +177,40 @@ Midi.trackToXml = function(track, n, pitchTable) {
         let childBlock;
         if (pitchTuple[1] === 0) {
           // Natural note.
-          childBlock = blockPitchElement;
+          childBlock = pitchBlockElement;
         } else {
           // Accidental note (sharp/flat).
           // <block type="math_arithmetic">
-          const blockArithmeticElement = Blockly.utils.xml.createElement('block');
-          blockArithmeticElement.setAttribute('type', 'math_arithmetic');
+          const arithmeticBlockElement = Blockly.utils.xml.createElement('block');
+          arithmeticBlockElement.setAttribute('type', 'math_arithmetic');
           // <field name="OP">MINUS</field>
           const opFieldElement = Blockly.utils.xml.createElement('field');
           opFieldElement.setAttribute('name', 'OP');
           const minusText = Blockly.utils.xml.createTextNode(
               pitchTuple[1] > 0 ? 'ADD' : 'MINUS');
           opFieldElement.appendChild(minusText);
-          blockArithmeticElement.appendChild(opFieldElement);
+          arithmeticBlockElement.appendChild(opFieldElement);
           // <value name="A">
           const aValueElement = Blockly.utils.xml.createElement('value');
           aValueElement.setAttribute('name', 'A');
-          blockArithmeticElement.appendChild(aValueElement);
-          aValueElement.appendChild(blockPitchElement);
+          arithmeticBlockElement.appendChild(aValueElement);
+          aValueElement.appendChild(pitchBlockElement);
           // <value name="B">
           const bValueElement = Blockly.utils.xml.createElement('value');
           bValueElement.setAttribute('name', 'B');
-          blockArithmeticElement.appendChild(bValueElement);
+          arithmeticBlockElement.appendChild(bValueElement);
           // <block type="math_number">
-          const blockNumberElement = Blockly.utils.xml.createElement('block');
-          blockNumberElement.setAttribute('type', 'math_number');
+          const numberBlockElement = Blockly.utils.xml.createElement('block');
+          numberBlockElement.setAttribute('type', 'math_number');
           // <field name="NUM">1</field>
           const numFieldElement = Blockly.utils.xml.createElement('field');
           numFieldElement.setAttribute('name', 'NUM');
           const oneText = Blockly.utils.xml.createTextNode('1');
           numFieldElement.appendChild(oneText);
-          blockNumberElement.appendChild(numFieldElement);
-          bValueElement.appendChild(blockNumberElement);
+          numberBlockElement.appendChild(numFieldElement);
+          bValueElement.appendChild(numberBlockElement);
 
-          childBlock = blockArithmeticElement;
+          childBlock = arithmeticBlockElement;
         }
         parentValueElements.shift().appendChild(childBlock);
       }
@@ -233,18 +233,18 @@ Midi.trackToXml = function(track, n, pitchTable) {
         const fraction = timeSlice[0];
         deltaTime = timeSlice[1];
         // <block type="music_rest">
-        const blockRestElement = Blockly.utils.xml.createElement('block');
-        blockRestElement.setAttribute('type', 'music_rest');
-        parentStackElement.appendChild(blockRestElement);
+        const restBlockElement = Blockly.utils.xml.createElement('block');
+        restBlockElement.setAttribute('type', 'music_rest');
+        parentStackElement.appendChild(restBlockElement);
         // <field name="DURATION">1/2</field>
         const durationFieldElement = Blockly.utils.xml.createElement('field');
         durationFieldElement.setAttribute('name', 'DURATION');
-        blockRestElement.appendChild(durationFieldElement);
+        restBlockElement.appendChild(durationFieldElement);
         const durationText = Blockly.utils.xml.createTextNode(fraction);
         durationFieldElement.appendChild(durationText);
         // <next>
         const nextElement = Blockly.utils.xml.createElement('next');
-        blockRestElement.appendChild(nextElement);
+        restBlockElement.appendChild(nextElement);
         parentStackElement = nextElement;
         lastDurationElement = null;
       }

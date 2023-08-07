@@ -324,10 +324,10 @@ Music.changeTab = function(index) {
 Music.blocksToCode = function() {
   // For safety, recompute startCount in the generator.
   Music.startCount = 0;
-  var code = Blockly.JavaScript.workspaceToCode(Music.workspace);
-  var header = '';
+  const code = Blockly.JavaScript.workspaceToCode(Music.workspace);
+  let header = '';
   // Add constants for all available MIDI pitches.
-  var pitchConstants = [];
+  const pitchConstants = [];
   for (const midi in Music.fromMidi) {
     pitchConstants.push(Music.fromMidi[midi] + '=' + midi);
   }
@@ -357,7 +357,7 @@ Music.editorChanged = function() {
       Music.codeChanged();
     } else {
       // Abort change, preserve link.
-      var code = Music.blocksToCode();
+      const code = Music.blocksToCode();
       Music.ignoreEditorChanges_ = true;
       setTimeout(function() {
         Music.editor['setValue'](code, -1);
@@ -365,7 +365,7 @@ Music.editorChanged = function() {
       }, 0);
     }
   } else {
-    var code = Music.editor['getValue']();
+    const code = Music.editor['getValue']();
     if (!code.trim()) {
       // Reestablish link between blocks and JS.
       Music.workspace.clear();
@@ -411,7 +411,7 @@ Music.bindClick = function(el, func) {
 Music.importInterpreter = function() {
   //<script type="text/javascript"
   //  src="../third-party/JS-Interpreter/compressed.js"></script>
-  var script = document.createElement('script');
+  const script = document.createElement('script');
   script.type = 'text/javascript';
   script.src = '../third-party/JS-Interpreter/compressed.js';
   document.head.appendChild(script);
@@ -422,7 +422,7 @@ Music.importInterpreter = function() {
  */
 Music.importSounds = function() {
   //<script type="text/javascript" src="../third-party/soundjs.min.js"></script>
-  var script = document.createElement('script');
+  const script = document.createElement('script');
   script.type = 'text/javascript';
   script.src = '../third-party/soundjs.min.js';
   script.onload = Music.registerSounds;
@@ -463,10 +463,10 @@ Music.transpileToEs5 = function(code) {
   if (typeof Babel !== 'object') {
     return undefined;
   }
-  var options = {
+  const options = {
     'presets': ['es2015']
   };
-  var fish = Babel.transform(code, options);
+  const fish = Babel.transform(code, options);
   return fish.code;
 };
 
@@ -483,28 +483,26 @@ Music.sliderChange = function() {
 Music.drawStaveBox = function() {
   // Clear all content.
   document.getElementById('staveBox').innerHTML = '';
-  var musicContainer = document.getElementById('musicContainer');
+  const musicContainer = document.getElementById('musicContainer');
   musicContainer.innerHTML = '';
   Music.barCount = 0;
   // Add spacer to allow scrollbar to scroll past last note/rest.
   // <img src="1x1.gif">
-  var img = document.createElement('img');
+  const img = document.createElement('img');
   img.id = 'musicContainerWidth';
   img.src = '1x1.gif';
   musicContainer.appendChild(img);
 
   // Draw empty staves.
-  var count = Music.transcriptVoices.length > 0 ?
+  const count = Music.transcriptVoices.length > 0 ?
       Music.transcriptVoices.length : Music.startCount;
   Music.drawStave(Blockly.utils.math.clamp(count, 1, 4));
 
   // Repopulate the music from the transcripts.
   for (let i = 0; i < Math.min(4, Music.transcriptVoices.length); i++) {
-    var transcriptVoice = Music.transcriptVoices[i];
-    var clock32 = 0;
-    for (const tuple of transcriptVoice) {
-      const pitches = tuple[0];
-      const duration = tuple[1];
+    const transcriptVoice = Music.transcriptVoices[i];
+    const clock32 = 0;
+    for (const [pitches, duration] of transcriptVoice) {
       for (const pitch of pitches) {
         Music.drawNote(i + 1, clock32, pitch, duration);
       }
@@ -519,21 +517,21 @@ Music.drawStaveBox = function() {
  */
 Music.drawStave = function(n) {
   Music.staveCount = n;
-  var staveBox = document.getElementById('staveBox');
+  const staveBox = document.getElementById('staveBox');
   // <img src="stave.png" class="stave" style="top: 100px">
   for (let i = 1; i <= n; i++) {
-    var top = Math.round(Music.staveTop_(i, n));
-    var img = document.createElement('img');
-    img.src = 'stave.png';
-    img.className = 'stave';
-    img.style.top = top + 'px';
-    staveBox.appendChild(img);
-    var img = document.createElement('img');
-    img.className = 'stave-15';
-    img.src = '15.png';
-    img.style.top = (top - 12) + 'px';
-    img.style.left = '10px';
-    staveBox.appendChild(img);
+    const top = Math.round(Music.staveTop_(i, n));
+    const imgStave = document.createElement('img');
+    imgStave.src = 'stave.png';
+    imgStave.className = 'stave';
+    imgStave.style.top = top + 'px';
+    staveBox.appendChild(imgStave);
+    const img15 = document.createElement('img');
+    img15.className = 'stave-15';
+    img15.src = '15.png';
+    img15.style.top = (top - 12) + 'px';
+    img15.style.left = '10px';
+    staveBox.appendChild(img15);
   }
 };
 
@@ -545,9 +543,9 @@ Music.drawStave = function(n) {
  * @private
  */
 Music.staveTop_ = function(i, n) {
-  var staveHeight = 69;
-  var boxHeight = 400 - 15;  // Subtract the scrollbar.
-  var top = (2 * i - 1) / (2 * n) * boxHeight;
+  const staveHeight = 69;
+  const boxHeight = 400 - 15;  // Subtract the scrollbar.
+  let top = (2 * i - 1) / (2 * n) * boxHeight;
   top -= staveHeight / 2;  // Center the stave on the desired spot.
   top += 5;  // Notes stick up a bit.
   return top;
