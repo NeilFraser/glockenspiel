@@ -50,7 +50,7 @@
 
     <h2 id="blockly">Blockly API</h2>
     <p>There are five options for the length of each note.  From top to bottom, they are whole notes, half notes, quarter notes
-    (the default), eighth notes, and sixteenth notes.  Thirty-second notes are not available in Blockly, only in JavaScript.</p>
+    (the default), eighth notes, sixteenth notes, and thirty-second notes.</p>
 
     <p><img src="note-lengths.png"></p>
 
@@ -69,8 +69,13 @@
 
     <p><img src="sharp-flat.png"></p>
 
+    <p>Chords (multiple notes) may be played by creating a list of pitches.
+    Consider assigning a chord to a variable if it is to be used many times.</p>
+
+    <p><img src="chord.png"></p>
+
     <p>A pause in the music is called a rest.  Rests come in the same lengths as notes.  From top to bottom,
-    they are whole rests, half rests, quarter rests (the default), eighth rests, and sixteenth rests.</p>
+    they are whole rests, half rests, quarter rests (the default), eighth rests, sixteenth, and thirty-second rests.</p>
 
     <p><img src="rest-lengths.png"></p>
 
@@ -101,8 +106,8 @@
     represented as a whole note, followed by the appropriate length of rests.
     Lengths not a multiple of 1/32 will be rounded down.  Pitch is a MIDI
     integer from 81 through 105, or one of the pre-defined convenience variables
-    A5 through A7.  Execution of this function call halts the current thread for
-    the duration of the note.</p>
+    A5 through A7.  Chords may be played by using an array of pitches (e.g. <tt>[G7, E7, C7]</tt>).
+    Execution of this function call halts the current thread for the duration of the note.</p>
 
     <p><strong><code>rest(<i>length</i>)</code></strong> - Pauses the music for
     the specified length.  Rests may have the same lengths as notes.  Execution

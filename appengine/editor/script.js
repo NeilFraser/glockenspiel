@@ -1270,8 +1270,8 @@ Music.submitButtonClick = function(e) {
   };
   // Convert the transcript into a stream.
   var data = {
-    tempo: Music.transcriptTempo,
-    stream: Music.voicesToStream(Music.transcriptVoices)
+    'tempo': Math.round(Music.transcriptTempo),
+    'stream': Music.voicesToStream(Music.transcriptVoices),
   };
   xhr.send('data=' + JSON.stringify(data));
 };

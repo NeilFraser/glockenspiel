@@ -45,6 +45,8 @@ Blockly.Blocks['music_note'] = {
         "width": 9, "height": 19, "alt": "eighth"}, "1/8"],
       [{"src": "notes/0.0625-low.png",
         "width": 9, "height": 19, "alt": "sixteenth"}, "1/16"],
+      [{"src": "notes/0.03125-low.png",
+        "width": 9, "height": 19, "alt": "thirtysecond"}, "1/32"],
     ];
     this.jsonInit({
       "message0": "play %1 note %2",
@@ -116,6 +118,8 @@ Blockly.Blocks['music_rest'] = {
               "width": 10, "height": 20, "alt": "eighth"}, "1/8"],
             [{"src": "rests/0.0625.png",
               "width": 10, "height": 20, "alt": "sixteenth"}, "1/16"],
+            [{"src": "rests/0.03125.png",
+              "width": 10, "height": 20, "alt": "thirtysecond"}, "1/32"],
           ]
         }
       ],
