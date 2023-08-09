@@ -72,17 +72,16 @@ Blockly.Blocks['music_note'] = {
 };
 
 Blockly.JavaScript['music_note'] = function(block) {
-  var pitch = Blockly.JavaScript.valueToCode(block, 'PITCH',
+  let pitch = Blockly.JavaScript.valueToCode(block, 'PITCH',
       Blockly.JavaScript.ORDER_COMMA) || 'C7';
 
   // Look for computed flats/sharps, and replace with JS variables.
   // E.g. 'C7 + 1' -> 'Db7'
-  var cache = Blockly.JavaScript['music_note'].cache_;
-  var notes = Object.values(Music.fromMidi);
-  for (var i = 0; i < notes.length; i++) {
-    var down = notes[i - 1];  // May be undefined.
-    var origin = notes[i];
-    var up = notes[i + 1];  // May be undefined.
+  const notes = Object.values(Music.fromMidi);
+  for (let i = 0; i < notes.length; i++) {
+    const down = notes[i - 1];  // May be undefined.
+    const origin = notes[i];
+    const up = notes[i + 1];  // May be undefined.
     if (down && pitch === origin + ' - 1') {
       pitch = down;
     }
@@ -169,8 +168,8 @@ Blockly.Blocks['music_start'] = {
 
 Blockly.JavaScript['music_start'] = function(block) {
   Music.startCount++;
-  var statements_stack = Blockly.JavaScript.statementToCode(block, 'STACK');
-  var code = 'function start' + Music.startCount + '() {\n' +
+  const statements_stack = Blockly.JavaScript.statementToCode(block, 'STACK');
+  const code = 'function start' + Music.startCount + '() {\n' +
       statements_stack + '}\n';
   // Add % so as not to collide with helper functions in definitions list.
   Blockly.JavaScript.definitions_['%start' + Music.startCount] = code;

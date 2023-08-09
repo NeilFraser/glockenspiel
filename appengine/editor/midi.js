@@ -61,9 +61,14 @@ Midi.startParse = function(arrayBuffer) {
   const midi = MidiParser.parse(dataArray);
   const pitchTable = Midi.createPitchTable(Midi.allPitches(midi));
   const xmlChunks = [];
-  for (let n = 1; n < midi['track'].length; n++) {
-    const track = Midi.parseTrack(midi, n);
-    xmlChunks.push(Midi.trackToXml(track, n, pitchTable));
+  if (midi['formatType'] === 0) {
+    const track = Midi.parseTrack(midi, 0);
+    xmlChunks.push(Midi.trackToXml(track, 0, pitchTable));
+  } else {
+    for (let n = 1; n < midi['track'].length; n++) {
+      const track = Midi.parseTrack(midi, n);
+      xmlChunks.push(Midi.trackToXml(track, n, pitchTable));
+    }
   }
   for (const xml of xmlChunks) {
     Music.setCode(xml);
@@ -102,7 +107,7 @@ Midi.parseTrack = function(midi, n) {
     }
   }
   return track;
-}
+};
 
 Midi.trackToXml = function(track, n, pitchTable) {
   // <xml>
@@ -259,7 +264,7 @@ Midi.trackToXml = function(track, n, pitchTable) {
  * @returns {!Array}
  */
 Midi.timeSlice = function(deltaTime) {
-  let fraction = ''
+  let fraction = '';
   if (deltaTime >= 1) {
     fraction = '1';
     deltaTime -= 1;
