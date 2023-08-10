@@ -96,8 +96,8 @@ Music.transcriptTempo = NaN;
 
 /**
  * Array containing voices of the last play.
- * Each voice is an array of [pitches, duration] tuples.
- * @type {!Array<!Array<!Array<number>|number>>}
+ * Each voice is an array of {duration, pitches} points.
+ * @type {!Array<!Array<!Music.TranscriptPoint>>}
  */
 Music.transcriptVoices = [];
 
@@ -135,7 +135,7 @@ Music.fromMidi = {
   102: 'Gb7',
   103: 'G7',
   104: 'Ab7',
-  105: 'A7'
+  105: 'A7',
 };
 
 /**
@@ -503,11 +503,11 @@ Music.drawStaveBox = function() {
   for (let i = 0; i < Math.min(4, Music.transcriptVoices.length); i++) {
     const transcriptVoice = Music.transcriptVoices[i];
     let clock32 = 0;
-    for (const [pitches, duration] of transcriptVoice) {
-      for (const pitch of pitches) {
-        Music.drawNote(i + 1, clock32, pitch, duration);
+    for (const point of transcriptVoice) {
+      for (const pitch of point.pitches) {
+        Music.drawNote(i + 1, clock32, pitch, point.duration);
       }
-      clock32 += duration * 32;
+      clock32 += point.duration * 32;
     }
   }
 };
@@ -631,7 +631,7 @@ Music.drawNote = function(stave, clock32, pitch, duration) {
 
   if (Music.clock32nds === clock32) {
     // Add a splash effect when playing a note or rest.
-    const splash = img.cloneNode();
+    const splash = img.cloneNode(true);
     musicContainer.appendChild(splash);
     // Wait 0 ms to trigger the CSS Transition.
     setTimeout(function() {splash.className = 'splash ' + img.className;}, 0);
@@ -1074,6 +1074,7 @@ Music.executeChunk_ = function(thread) {
     } catch (e) {
       // User error, terminate in shame.
       alert(e);
+      console.log(e);
       go = false;
     }
     if (ticks-- === 0) {
@@ -1197,7 +1198,7 @@ Music.rest = function(duration, opt_id) {
   Music.stopSound(Music.activeThread);
   Music.activeThread.pauseUntil32nds = duration * 32 + Music.clock32nds;
   // Make a record of this rest.
-  Music.activeThread.appendTranscript(duration, Music.REST);
+  Music.activeThread.appendTranscript(duration, [Music.REST]);
   Music.drawNote(Music.activeThread.stave, Music.clock32nds,
                  Music.REST, duration);
   Music.animate(opt_id);
@@ -1287,7 +1288,8 @@ Music.submitButtonClick = function(e) {
 /**
  * Flatten the 2D voices array into a simpler 1D stream that more closely
  * resembles the MIDI format.
- * @param {!Array<!Array<number>>} voices Tuples of MIDI notes and durations.
+ * @param {!Array<!Array<!Music.TranscriptPoint>>} voices Array of voices.
+ *   Each voice is an array of duration and pitch objects.
  * @returns {!Array<!Array<number>|number>} Stream of notes and pauses.
  */
 Music.voicesToStream = function(voices) {
@@ -1315,18 +1317,17 @@ Music.voicesToStream = function(voices) {
         done = false;
       } else {
         // Consume the next note tuple.
-        const tuple = voice[pointers[i]];
-        if (!tuple) {
+        const point = voice[pointers[i]];
+        if (!point) {
           continue;  // Ran out of data on this voice.
         }
         done = false;
-        const [notes, duration] = tuple;
-        for (const note of notes) {
-          if (note !== Music.REST) {
-            newNotesSet.add(note);
+        for (const pitch of point.pitches) {
+          if (pitch !== Music.REST) {
+            newNotesSet.add(pitch);
           }
         }
-        pauseUntil32nds[i] = duration * 32 + clock32nds;
+        pauseUntil32nds[i] = point.duration * 32 + clock32nds;
         pointers[i]++;
       }
     }
@@ -1350,6 +1351,17 @@ Music.voicesToStream = function(voices) {
   return stream;
 };
 
+/**
+ * One pitch, chord, or rest on a transcript.
+ * @param {number} duration Fraction of a whole note length to play.
+ * @param {!Array<number>} pitches Array of MIDI note numbers to play (81-105)
+ *     or rest (Music.REST).
+ * @constructor
+ */
+Music.TranscriptPoint = function(duration, pitches) {
+  this.duration = duration;
+  this.pitches = pitches;
+};
 
 /**
  * One execution thread.
@@ -1374,9 +1386,11 @@ Music.Thread = function(stateStack) {
 /**
  * Add a note or rest to the transcript.
  * @param {number} duration Fraction of a whole note length to play.
- * @param {number|!Array<number>} pitches MIDI note number to play (81-105).
+ * @param {!Array<number>} pitches Array of MIDI note numbers to play (81-105),
+ *     or Music.REST.
  */
 Music.Thread.prototype.appendTranscript = function(duration, pitches) {
+  const transcriptPoint = new Music.TranscriptPoint(duration, pitches);
   if (this.stave === undefined) {
     // Find all stave numbers currently in use.
     const staves = [];
@@ -1399,18 +1413,18 @@ Music.Thread.prototype.appendTranscript = function(duration, pitches) {
     let existingDuration = 0;
     const transcript = Music.transcriptVoices[i - 1];
     for (let j = 0; j < transcript.length; j++) {
-      existingDuration += transcript[j][1];
+      existingDuration += transcript[j].duration;
     }
     // Add pause to line up this transcript stave with the clock.
     let deltaDuration = Music.clock32nds / 32 - existingDuration;
     deltaDuration = Math.round(deltaDuration * 1000000) / 1000000;
     if (deltaDuration > 0) {
-      transcript.push([Music.REST, deltaDuration]);
+      transcript.push(new Music.TranscriptPoint(deltaDuration, [Music.REST]));
     }
     // Redraw the visualization with the new number of staves.
     Music.drawStaveBox();
   }
-  Music.transcriptVoices[this.stave - 1].push([pitches, duration]);
+  Music.transcriptVoices[this.stave - 1].push(transcriptPoint);
 };
 
 /**
