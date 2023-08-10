@@ -886,7 +886,7 @@ Music.initInterpreter_ = function(interpreter, globalObject) {
     node['type'] = 'CallExpression';
     state = new Interpreter.State(node, globalScope);
     state.doneCallee_ = true;
-    state.funcThis_ = globalScope;
+    state.funcThis_ = globalScope.object;
     state.func_ = func;
     state.doneArgs_ = true;
     state.arguments_ = [];
@@ -975,30 +975,31 @@ Music.execute = function() {
     return;
   }
 
-  Music.reset();
-  Blockly.selected && Blockly.selected.unselect();
-
-  // Create an interpreter whose global scope will be the cross-thread global.
   let code;
   if (Music.blocksEnabled_) {
     code = Music.blocksToCode();
   } else {
     code = Music.editor['getValue']();
+    try {
+      code = Music.transpileToEs5(code);
+    } catch (e) {
+      // Syntax error!
+      Music.resetButtonClick();
+      alert(e);
+      throw e;
+    }
+    if (code === undefined) {
+      // Babel loads on demand and hasn't arrived yet.  Try again later.
+      console.log('Waiting for Babel to load.');
+      setTimeout(Music.execute, 250);
+      return;
+    }
   }
-  try {
-    code = Music.transpileToEs5(code);
-  } catch (e) {
-    // Syntax error!
-    Music.resetButtonClick();
-    alert(e);
-    throw e;
-  }
-  if (code === undefined) {
-    // Babel loads on demand and hasn't arrived yet.  Try again later.
-    console.log('Waiting for Babel to load.');
-    setTimeout(Music.execute, 250);
-    return;
-  }
+
+  Music.reset();
+  Blockly.selected && Blockly.selected.unselect();
+
+  // Create an interpreter whose global scope will be the cross-thread global.
   Music.interpreter = new Interpreter(code, Music.initInterpreter_);
   Music.threads.push(new Music.Thread(Music.interpreter.getStateStack()));
   setTimeout(Music.tick, 100);
