@@ -261,12 +261,10 @@ Music.init = function() {
   Music.bindClick('resetButton', Music.resetButtonClick);
   Music.bindClick('submitButton', Music.submitButtonClick);
 
-  // Lazy-load the ESx-ES5 transpiler.
-  setTimeout(Music.importBabel, 1);
   // Lazy-load the JavaScript interpreter.
-  setTimeout(Music.importInterpreter, 2);
+  setTimeout(Music.importInterpreter, 1);
   // Lazy-load the sounds.
-  setTimeout(Music.importSounds, 3);
+  setTimeout(Music.importSounds, 2);
 
   Music.bindClick('linkButton', BlocklyStorage.link);
   Music.bindClick('helpButton', Music.showHelp);
@@ -355,9 +353,12 @@ Music.editorChanged = function() {
       Music.blocksEnabled_ = false;
       Music.startCount = 0;
       Music.codeChanged();
+      // Load on demand the ESx-ES5 transpiler.
+      Music.importBabel();
     } else {
       // Abort change, preserve link.
-      const code = Music.blocksToCode();
+      let code = Music.blocksToCode();
+      code = code.replace(/, 'block_id_([^']+)'/g, '');
       Music.ignoreEditorChanges_ = true;
       setTimeout(function() {
         Music.editor['setValue'](code, -1);
@@ -985,12 +986,18 @@ Music.execute = function() {
     code = Music.editor['getValue']();
   }
   try {
-    code = Music.transpileToEs5(code) || code;
+    code = Music.transpileToEs5(code);
   } catch (e) {
     // Syntax error!
     Music.resetButtonClick();
     alert(e);
     throw e;
+  }
+  if (code === undefined) {
+    // Babel loads on demand and hasn't arrived yet.  Try again later.
+    console.log('Waiting for Babel to load.');
+    setTimeout(Music.execute, 250);
+    return;
   }
   Music.interpreter = new Interpreter(code, Music.initInterpreter_);
   Music.threads.push(new Music.Thread(Music.interpreter.getStateStack()));
