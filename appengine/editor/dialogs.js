@@ -172,7 +172,7 @@ MusicDialogs.dialogUnbindDragEvents_ = function() {
 
 /**
  * Hide the dialog pop-up.
- * @param {boolean} opt_animate Animate the dialog closing.  Defaults to true.
+ * @param {boolean=} opt_animate Animate the dialog closing.  Defaults to true.
  *     Requires that origin was not null when dialog was opened.
  */
 MusicDialogs.hideDialog = function(opt_animate) {

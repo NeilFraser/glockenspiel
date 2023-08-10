@@ -64,6 +64,9 @@ BlocklyStorage.makeRequest_ = function(url, data, onSuccess) {
   }
   BlocklyStorage.httpRequest_ = new XMLHttpRequest();
 
+  /**
+   * @this {!XMLHttpRequest}
+   */
   BlocklyStorage.httpRequest_.onload = function() {
     if (this.status === 200) {
       onSuccess.call(this);
@@ -81,7 +84,7 @@ BlocklyStorage.makeRequest_ = function(url, data, onSuccess) {
 
 /**
  * Callback function for link AJAX call.
- * @param {string} responseText Response to request.
+ * @this {!XMLHttpRequest}
  * @private
  */
 BlocklyStorage.handleLinkResponse_ = function() {
@@ -94,7 +97,7 @@ BlocklyStorage.handleLinkResponse_ = function() {
 
 /**
  * Callback function for retrieve XML AJAX call.
- * @param {string} responseText Response to request.
+ * @this {!XMLHttpRequest}
  * @private
  */
 BlocklyStorage.handleRetrieveXmlResponse_ = function() {

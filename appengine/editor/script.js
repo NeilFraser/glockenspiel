@@ -238,7 +238,7 @@ Music.init = function() {
       Object.values(Music.fromMidi).join(','));
 
   // Initialize the slider.
-  const sliderSvg = document.getElementById('slider');
+  const sliderSvg = /** @type {!Element} */(document.getElementById('slider'));
   Music.speedSlider = new Slider(10, 35, 130, sliderSvg, Music.sliderChange);
 
   if (window.location.hash.length > 1) {
@@ -1296,10 +1296,11 @@ Music.voicesToStream = function(voices) {
     pauseUntil32nds.push(0);
   }
   // Walk through the voices at 1/32nd note intervals and record the stream.
+  let done = true;
   do {
     clock32nds++;
     tickAccumulator++;
-    let done = true;
+    done = true;
     for (let i = 0, voice; (voice = voices[i]); i++) {
       if (pauseUntil32nds[i] > clock32nds) {
         // A note on this voice is still playing.
@@ -1353,6 +1354,7 @@ Music.Thread = function(stateStack) {
   // Stave set to undefined means this thread has not played anything yet.
   // Stave set to 1-4 means this thread is visualized.
   // Stave set above 4 will play but not be visualized.
+  /** @type {number|undefined} */
   this.stave = undefined;
   this.stateStack = stateStack;
   this.pauseUntil32nds = 0;

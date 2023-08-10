@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Script to deploy on GAE.
 
 APP=./app.yaml

@@ -10,8 +10,8 @@
   <body>
     <h1>Blockly Glockenspiel: API Documentation</h1>
 
-    <p>The glockenspiel has 25 notes, just over two octaves.  Here are the available notes and
- their standard numeric MIDI values:</p>
+    <p>The glockenspiel has 25 notes, just over two octaves.  Here are the
+    available notes and their standard numeric MIDI values:</p>
 
     <table id="notes">
       <tr><td>A<sub>5</sub></td><td>81</td></tr>
@@ -49,23 +49,27 @@
     </ul>
 
     <h2 id="blockly">Blockly API</h2>
-    <p>There are five options for the length of each note.  From top to bottom, they are whole notes, half notes, quarter notes
-    (the default), eighth notes, sixteenth notes, and thirty-second notes.</p>
+    <p>There are six options for the length of each note.  From top to bottom,
+    they are whole notes, half notes, quarter notes (the default), eighth notes,
+    sixteenth notes, and thirty-second notes.</p>
 
     <p><img src="note-lengths.png"></p>
 
-    <p>A note's pitch can be changed by either typing its name ('A5' - 'A7') or by choosing the note value on a staff.
-    Note that this UI only allows for the selection of the 15 natural pitches (not sharps or flats).</p>
+    <p>A note's pitch can be changed by either typing its name ('A5' - 'A7') or
+    by choosing the note value on a staff.  Note that this UI only allows for
+    the selection of the 15 natural pitches (not sharps or flats).</p>
 
     <p><img src="note-pitch.png"></p>
 
-    <p>Alternatively, the pitch block can be replaced by a number block which specifies MIDI value (81-105) of the pitch.
-    The following example shows two quarter notes of the same pitch being played back to back.</p>
+    <p>Alternatively, the pitch block can be replaced by a number block which
+    specifies MIDI value (81-105) of the pitch.  The following example shows two
+    quarter notes of the same pitch being played back to back.</p>
 
     <p><img src="note-midi.png"></p>
 
-    <p>In order to play a sharp or flat pitch, one can increment or decrement a pitch block, or specify the pitch's MIDI
-    value directly.  The following example shows three C♯6 or D♭6 quarter notes played in a row.</p>
+    <p>In order to play a sharp or flat pitch, one can increment or decrement a
+    pitch block, or specify the pitch's MIDI value directly.  The following
+    example shows three C♯6 or D♭6 quarter notes played in a row.</p>
 
     <p><img src="sharp-flat.png"></p>
 
@@ -74,8 +78,9 @@
 
     <p><img src="chord.png"></p>
 
-    <p>A pause in the music is called a rest.  Rests come in the same lengths as notes.  From top to bottom,
-    they are whole rests, half rests, quarter rests (the default), eighth rests, sixteenth, and thirty-second rests.</p>
+    <p>A pause in the music is called a rest.  Rests come in the same lengths as
+    notes.  From top to bottom, they are whole rests, half rests, quarter rests
+    (the default), eighth rests, sixteenth, and thirty-second rests.</p>
 
     <p><img src="rest-lengths.png"></p>
 
@@ -92,22 +97,23 @@
     However, once one edits the JavaScript, it is not possible to go back to
     Blockly, except by either deleting the entire program or reloading the page.</p>
 
-    <p>It is recommended that a program start with this definition of the following
-    twenty-five global variables for note pitches:</p>
+    <p>It is recommended that a program start with this definition of the
+    following twenty-five global variables for note pitches:</p>
 
     <pre class="codeblock">var A5=81, Bb5=82, B5=83, C6=84, Db6=85, D6=86, Eb6=87, E6=88, F6=89, Gb6=90, G6=91, Ab6=92, A6=93,
     Bb6=94, B6=95, C7=96, Db7=97, D7=98, Eb7=99, E7=100, F7=101, Gb7=102, G7=103, Ab7=104, A7=105;</pre>
 
     <p>The API is made up of three functions:</p>
 
-    <p><strong><code>play(<i>length</i>, <i>pitch</i>)</code></strong> - Plays a note
-    of the specified length and pitch.  Length is intended to be 1, 1/2, 1/4, 1/8, 1/16,
-    or 1/32.  Shorter lengths are an error and will be dropped.  Longer lengths will be
-    represented as a whole note, followed by the appropriate length of rests.
-    Lengths not a multiple of 1/32 will be rounded down.  Pitch is a MIDI
-    integer from 81 through 105, or one of the pre-defined convenience variables
-    A5 through A7.  Chords may be played by using an array of pitches (e.g. <tt>[G7, E7, C7]</tt>).
-    Execution of this function call halts the current thread for the duration of the note.</p>
+    <p><strong><code>play(<i>length</i>, <i>pitch</i>)</code></strong> - Plays a
+    note of the specified length and pitch.  Length is intended to be 1, 1/2,
+    1/4, 1/8, 1/16, or 1/32.  Shorter lengths are an error and will be dropped.
+    Longer lengths will be represented as a whole note, followed by the
+    appropriate length of rests.  Lengths not a multiple of 1/32 will be rounded
+    down.  Pitch is a MIDI integer from 81 through 105, or one of the pre-defined
+    convenience variables A5 through A7.  Chords may be played by using an array
+    of pitches (e.g. <tt>[G7, E7, C7]</tt>).  Execution of this function call
+    halts the current thread for the duration of the note.</p>
 
     <p><strong><code>rest(<i>length</i>)</code></strong> - Pauses the music for
     the specified length.  Rests may have the same lengths as notes.  Execution
@@ -115,8 +121,8 @@
 
     <p><strong><code>runThread(<i>func</i>)</code></strong> - The provided function
     will be run in a new concurrently executing thread.  There may be up to
-    eight running threads, though only four will shown on the scrolling
-    visualization.  Below is a two-threaded program that plays the same four-note
+    eight running threads, though only four will be shown on the scrolling
+    visualisation.  Below is a two-threaded program that plays the same four-note
     tune as a round (identical to the example in the Blockly API section above).</p>
 
     <pre class="codeblock">var A5=81, Bb5=82, B5=83, C6=84, Db6=85, D6=86, Eb6=87, E6=88, F6=89, Gb6=90, G6=91, Ab6=92, A6=93,
@@ -160,9 +166,9 @@ function tune() {
     a 1/4 note would play.  The range is restricted from 125 to 625, and
     defaults to 375 if not specified.</p>
 
-    <p><strong><code>stream</code></strong> specifies an array of alternating notes
-    and pauses.  Notes are an array of MIDI pitch values (81 through 105) to be
-    played simultaneously.  A maximum of eight notes may be played at once.
+    <p><strong><code>stream</code></strong> specifies an array of alternating
+    notes and pauses.  Notes are an array of MIDI pitch values (81 through 105)
+    to be played simultaneously.  A maximum of eight notes may be played at once.
     Pauses are delays until the next note (1/32 through 256).</p>
 
     <p>Open an HTTP connection to <strong><code>https://glockenspiel.appspot.com/submit</code></strong>
