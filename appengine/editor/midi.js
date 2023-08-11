@@ -60,22 +60,28 @@ Midi.startParse = function(arrayBuffer) {
   const dataArray = new Uint8Array(arrayBuffer);
   const midi = MidiParser.parse(dataArray);
   const pitchTable = Midi.createPitchTable(Midi.allPitches(midi));
-  const xmlChunks = [];
+  // <xml>
+  const xmlElement = Blockly.utils.xml.createElement('xml');
   if (midi['formatType'] === 0) {
     const track = Midi.parseTrack(midi, 0);
-    xmlChunks.push(Midi.trackToXml(track, 0, pitchTable));
+    xmlElement.appendChild(Midi.trackToXml(track, 0, pitchTable));
   } else {
     for (let n = 1; n < midi['track'].length; n++) {
       const track = Midi.parseTrack(midi, n);
-      xmlChunks.push(Midi.trackToXml(track, n, pitchTable));
+      xmlElement.appendChild(Midi.trackToXml(track, n, pitchTable));
     }
   }
-  for (const xml of xmlChunks) {
-    Music.setCode(xml);
-  }
+  Music.setCode(xmlElement);
   MusicDialogs.hideDialog();
 };
 
+/**
+ * Parse MIDI track and create an array of pitches and pauses for one voice.
+ * E.g. [[81, 84], 0.5, [100], 0.25]
+ * @param {!Object} midi MIDI data structure.
+ * @param {number} n The track number to parse.
+ * @returns {!Array<!Array<number>|number>} Pitch/pause array.
+ */
 Midi.parseTrack = function(midi, n) {
   const timeDivision = midi['timeDivision'] * 2;
   const events = midi['track'][n]['event'];
@@ -109,15 +115,20 @@ Midi.parseTrack = function(midi, n) {
   return track;
 };
 
+/**
+ * Convert one track into a Blockly stack of blocks.
+ * @param {!Array<!Array<number>|number>} track Pitch/pause array.
+ * @param {number} n The track number.
+ * @param {!Map<number,!Array>} pitchTable Map of MIDI pitch values to
+ *     glockenspiel pitches.
+ * @returns {!Element} Blockly XML for the start block.
+ */
 Midi.trackToXml = function(track, n, pitchTable) {
-  // <xml>
-  const xmlElement = Blockly.utils.xml.createElement('xml');
   // <block type="music_start" x="10" y="10">
   const startBlockElement = Blockly.utils.xml.createElement('block');
   startBlockElement.setAttribute('type', 'music_start');
   startBlockElement.setAttribute('x', n * 300 + 10);
   startBlockElement.setAttribute('y', 10);
-  xmlElement.appendChild(startBlockElement);
   // <statement name="STACK">
   const statementStackElement = Blockly.utils.xml.createElement('statement');
   statementStackElement.setAttribute('name', 'STACK');
@@ -175,12 +186,12 @@ Midi.trackToXml = function(track, n, pitchTable) {
         const pitchFieldElement = Blockly.utils.xml.createElement('field');
         pitchFieldElement.setAttribute('name', 'PITCH');
         pitchBlockElement.appendChild(pitchFieldElement);
-        const pitchTuple = pitchTable.get(pitch);
-        const pitchText = Blockly.utils.xml.createTextNode(pitchTuple[0]);
+        const [abcPitch, accidental] = pitchTable.get(pitch);
+        const pitchText = Blockly.utils.xml.createTextNode(abcPitch);
         pitchFieldElement.appendChild(pitchText);
 
         let childBlock;
-        if (pitchTuple[1] === 0) {
+        if (accidental === 0) {
           // Natural note.
           childBlock = pitchBlockElement;
         } else {
@@ -192,7 +203,7 @@ Midi.trackToXml = function(track, n, pitchTable) {
           const opFieldElement = Blockly.utils.xml.createElement('field');
           opFieldElement.setAttribute('name', 'OP');
           const minusText = Blockly.utils.xml.createTextNode(
-              pitchTuple[1] > 0 ? 'ADD' : 'MINUS');
+              accidental > 0 ? 'ADD' : 'MINUS');
           opFieldElement.appendChild(minusText);
           arithmeticBlockElement.appendChild(opFieldElement);
           // <value name="A">
@@ -255,7 +266,7 @@ Midi.trackToXml = function(track, n, pitchTable) {
       }
     }
   }
-  return xmlElement;
+  return startBlockElement;
 };
 
 /**
