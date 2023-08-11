@@ -529,7 +529,7 @@ Music.drawStave = function(n) {
     staveBox.appendChild(imgStave);
     const img15 = document.createElement('img');
     img15.className = 'stave-15';
-    img15.src = '15.png';
+    img15.src = '1x1.gif';
     img15.style.top = (top - 12) + 'px';
     img15.style.left = '10px';
     staveBox.appendChild(img15);
@@ -1351,91 +1351,93 @@ Music.voicesToStream = function(voices) {
   return stream;
 };
 
-/**
- * One pitch, chord, or rest on a transcript.
- * @param {number} duration Fraction of a whole note length to play.
- * @param {!Array<number>} pitches Array of MIDI note numbers to play (81-105)
- *     or rest (Music.REST).
- * @constructor
- */
-Music.TranscriptPoint = function(duration, pitches) {
-  this.duration = duration;
-  this.pitches = pitches;
-};
-
-/**
- * One execution thread.
- * @param {!Array<!Interpreter.State>} stateStack JS-Interpreter state stack.
- * @constructor
- */
-Music.Thread = function(stateStack) {
-  this.id = Music.threadCount++;
-  //console.info('Thread ' + this.id + ' created.');
-  // Stave set to undefined means this thread has not played anything yet.
-  // Stave set to 1-4 means this thread is visualized.
-  // Stave set above 4 will play but not be visualized.
-  /** @type {number|undefined} */
-  this.stave = undefined;
-  this.stateStack = stateStack;
-  this.pauseUntil32nds = 0;
-  this.highlighedBlock = null;
-  // Currently playing sound object.
-  this.sounds = [];
-};
-
-/**
- * Add a note or rest to the transcript.
- * @param {number} duration Fraction of a whole note length to play.
- * @param {!Array<number>} pitches Array of MIDI note numbers to play (81-105),
- *     or Music.REST.
- */
-Music.Thread.prototype.appendTranscript = function(duration, pitches) {
-  const transcriptPoint = new Music.TranscriptPoint(duration, pitches);
-  if (this.stave === undefined) {
-    // Find all stave numbers currently in use.
-    const staves = [];
-    for (const thread of Music.threads) {
-      if (thread.stave !== undefined) {
-        staves[thread.stave] = true;
-      }
-    }
-    // Search for the next available stave.
-    let i = 1;
-    while (staves[i]) {
-      i++;
-    }
-    this.stave = i;
-    // Create a new transcript stave if this stave is not recycled.
-    if (!Music.transcriptVoices[i - 1]) {
-      Music.transcriptVoices[i - 1] = [];
-    }
-    // Compute length of existing content in this transcript stave.
-    let existingDuration = 0;
-    const transcript = Music.transcriptVoices[i - 1];
-    for (let j = 0; j < transcript.length; j++) {
-      existingDuration += transcript[j].duration;
-    }
-    // Add pause to line up this transcript stave with the clock.
-    let deltaDuration = Music.clock32nds / 32 - existingDuration;
-    deltaDuration = Math.round(deltaDuration * 1000000) / 1000000;
-    if (deltaDuration > 0) {
-      transcript.push(new Music.TranscriptPoint(deltaDuration, [Music.REST]));
-    }
-    // Redraw the visualization with the new number of staves.
-    Music.drawStaveBox();
+Music.TranscriptPoint = class {
+  /**
+   * One pitch, chord, or rest on a transcript.
+   * @param {number} duration Fraction of a whole note length to play.
+   * @param {!Array<number>} pitches Array of MIDI note numbers to play (81-105)
+   *     or rest (Music.REST).
+   */
+  constructor(duration, pitches) {
+    this.duration = duration;
+    this.pitches = pitches;
   }
-  Music.transcriptVoices[this.stave - 1].push(transcriptPoint);
 };
 
-/**
- * Thread complete.  Wrap up.
- */
-Music.Thread.prototype.dispose = function() {
-  Music.stopSound(this);
-  if (this.highlighedBlock) {
-    Music.highlight(this.highlighedBlock, false);
+Music.Thread = class {
+  /**
+   * One execution thread.
+   * @param {!Array<!Interpreter.State>} stateStack JS-Interpreter state stack.
+   */
+  constructor(stateStack) {
+    this.id = Music.threadCount++;
+    //console.info('Thread ' + this.id + ' created.');
+    // Stave set to undefined means this thread has not played anything yet.
+    // Stave set to 1-4 means this thread is visualized.
+    // Stave set above 4 will play but not be visualized.
+    /** @type {number|undefined} */
+    this.stave = undefined;
+    this.stateStack = stateStack;
+    this.pauseUntil32nds = 0;
     this.highlighedBlock = null;
+    // Currently playing sound object.
+    this.sounds = [];
   }
-  //console.info('Thread ' + this.id + ' completed.');
-  Blockly.utils.arrayRemove(Music.threads, this);
+
+  /**
+   * Add a note or rest to the transcript.
+   * @param {number} duration Fraction of a whole note length to play.
+   * @param {!Array<number>} pitches Array of MIDI note numbers to play (81-105),
+   *     or Music.REST.
+   */
+  appendTranscript(duration, pitches) {
+    const transcriptPoint = new Music.TranscriptPoint(duration, pitches);
+    if (this.stave === undefined) {
+      // Find all stave numbers currently in use.
+      const staves = [];
+      for (const thread of Music.threads) {
+        if (thread.stave !== undefined) {
+          staves[thread.stave] = true;
+        }
+      }
+      // Search for the next available stave.
+      let i = 1;
+      while (staves[i]) {
+        i++;
+      }
+      this.stave = i;
+      // Create a new transcript stave if this stave is not recycled.
+      if (!Music.transcriptVoices[i - 1]) {
+        Music.transcriptVoices[i - 1] = [];
+      }
+      // Compute length of existing content in this transcript stave.
+      let existingDuration = 0;
+      const transcript = Music.transcriptVoices[i - 1];
+      for (let j = 0; j < transcript.length; j++) {
+        existingDuration += transcript[j].duration;
+      }
+      // Add pause to line up this transcript stave with the clock.
+      let deltaDuration = Music.clock32nds / 32 - existingDuration;
+      deltaDuration = Math.round(deltaDuration * 1000000) / 1000000;
+      if (deltaDuration > 0) {
+        transcript.push(new Music.TranscriptPoint(deltaDuration, [Music.REST]));
+      }
+      // Redraw the visualization with the new number of staves.
+      Music.drawStaveBox();
+    }
+    Music.transcriptVoices[this.stave - 1].push(transcriptPoint);
+  }
+
+  /**
+   * Thread complete.  Wrap up.
+   */
+  dispose() {
+    Music.stopSound(this);
+    if (this.highlighedBlock) {
+      Music.highlight(this.highlighedBlock, false);
+      this.highlighedBlock = null;
+    }
+    //console.info('Thread ' + this.id + ' completed.');
+    Blockly.utils.arrayRemove(Music.threads, this);
+  }
 };

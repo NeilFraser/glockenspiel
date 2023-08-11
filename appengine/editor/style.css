@@ -223,6 +223,8 @@ button.primary {
 }
 
 .stave-15 {
+  background-image: url(icons.png);
+  background-position: -48px -24px;
   height: 11px;
   width: 14px;
   position: absolute;
