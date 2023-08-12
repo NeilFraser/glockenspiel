@@ -27,9 +27,10 @@ Date: 27 June 2023
 Modifications: None.
 
 * JS-Interpreter
-Source: https://blockly.games/third-party/JS-Interpreter/compressed.js
-Date: 3 February 2023
-Modifications: None.
+Source: https://github.com/NeilFraser/JS-Interpreter/blob/master/acorn.js
+Source: https://github.com/NeilFraser/JS-Interpreter/blob/master/interpreter.js
+Date: 12 August 2023
+Modifications: Compiled with SIMPLE instead of ADVANCED.
 
 * midi-parser-js
 Source: https://github.com/colxi/midi-parser-js

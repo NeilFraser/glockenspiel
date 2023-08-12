@@ -411,10 +411,10 @@ Music.bindClick = function(el, func) {
  */
 Music.importInterpreter = function() {
   //<script type="text/javascript"
-  //  src="../third-party/JS-Interpreter/compressed.js"></script>
+  //  src="../third-party/JS-Interpreter/acorn_interpreter_simple.js"></script>
   const script = document.createElement('script');
   script.type = 'text/javascript';
-  script.src = '../third-party/JS-Interpreter/compressed.js';
+  script.src = '../third-party/JS-Interpreter/acorn_interpreter_simple.js';
   document.head.appendChild(script);
 };
 
