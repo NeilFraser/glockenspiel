@@ -241,7 +241,7 @@ Midi.trackToXml = function(track, n, pitchTable) {
           lastDurationElement.appendChild(durationText);
         }
       }
-      while (deltaTime >= 1/16) {
+      while (deltaTime >= 1/32) {
         // Create rest block.
         const timeSlice = Midi.timeSlice(deltaTime);
         const fraction = timeSlice[0];
@@ -289,6 +289,13 @@ Midi.timeSlice = function(deltaTime) {
   } else if (deltaTime >= 1/16) {
     fraction = '1/16';
     deltaTime -= 1/16;
+  } else if (deltaTime >= 1/32) {
+    fraction = '1/32';
+    deltaTime -= 1/32;
+  } else {
+    console.warn('Very short time signature: ' + deltaTime)
+    fraction = '1/32';
+    deltaTime = 0;
   }
   return [fraction, deltaTime];
 };
