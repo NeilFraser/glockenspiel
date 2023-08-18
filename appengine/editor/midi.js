@@ -62,12 +62,18 @@ Midi.startParse = function(arrayBuffer) {
   const pitchTable = Midi.createPitchTable(Midi.allPitches(midi));
   // <xml>
   const xmlElement = Blockly.utils.xml.createElement('xml');
+  let startColumn = 0;
   for (let n = 0; n < midi['track'].length; n++) {
     const track = Midi.parseTrack(midi, n);
-    // Track 0 may be empty of notes if it only contains meta data.
-    if (track.length) {
-      xmlElement.appendChild(Midi.trackToXml(track, n, pitchTable));
+    if (track.length === 0) {
+      // Track 0 may be empty of notes if it only contains meta data.
+      continue;
     }
+    if (track.length === 1 && typeof track[0] === 'number') {
+      // Nothing but rests in this track.
+      continue;
+    }
+    xmlElement.appendChild(Midi.trackToXml(track, startColumn++, pitchTable));
   }
   Music.setCode(xmlElement);
   MusicDialogs.hideDialog();
