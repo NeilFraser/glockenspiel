@@ -111,11 +111,6 @@ Midi.parseTrack = function(midi, n) {
       }
     }
   }
-  for (const trackItem of track) {
-    if (Array.isArray(trackItem)) {
-      trackItem.sort();
-    }
-  }
   return track;
 };
 
@@ -123,8 +118,6 @@ Midi.parseTrack = function(midi, n) {
  * Convert one track into a Blockly stack of blocks.
  * @param {!Array<!Array<number>|number>} track Pitch/pause array.
  * @param {number} n The track number.
- * @param {!Map<number,!Array>} pitchTable Map of MIDI pitch values to
- *     glockenspiel pitches.
  * @returns {!Element} Blockly XML for the start block.
  */
 Midi.trackToXml = function(track, n, pitchTable) {
@@ -162,16 +155,17 @@ Midi.trackToXml = function(track, n, pitchTable) {
       parentStackElement = nextElement;
       const parentValueElements = [];
 
-      if (trackItem.length > 1) {
+      const chords = Midi.pitchesToChords(trackItem, pitchTable);
+      if (chords.length > 1) {
         // <block type="lists_create_with">
         const listBlockElement = Blockly.utils.xml.createElement('block');
         listBlockElement.setAttribute('type', 'lists_create_with');
         pitchValueElement.appendChild(listBlockElement);
         // <mutation items="2"/>
         const mutationElement = Blockly.utils.xml.createElement('mutation');
-        mutationElement.setAttribute('items', trackItem.length);
+        mutationElement.setAttribute('items', chords.length);
         listBlockElement.appendChild(mutationElement);
-        for (let i = 0; i < trackItem.length; i++) {
+        for (let i = 0; i < chords.length; i++) {
           // <value name="ADD0">
           const addValueElement = Blockly.utils.xml.createElement('value');
           addValueElement.setAttribute('name', 'ADD' + i);
@@ -182,7 +176,7 @@ Midi.trackToXml = function(track, n, pitchTable) {
         parentValueElements.push(pitchValueElement);
       }
 
-      for (const pitch of trackItem) {
+      for (const [abcPitch, accidental] of chords) {
         // <block type="music_pitch">
         const pitchBlockElement = Blockly.utils.xml.createElement('block');
         pitchBlockElement.setAttribute('type', 'music_pitch');
@@ -190,7 +184,6 @@ Midi.trackToXml = function(track, n, pitchTable) {
         const pitchFieldElement = Blockly.utils.xml.createElement('field');
         pitchFieldElement.setAttribute('name', 'PITCH');
         pitchBlockElement.appendChild(pitchFieldElement);
-        const [abcPitch, accidental] = pitchTable.get(pitch);
         const pitchText = Blockly.utils.xml.createTextNode(abcPitch);
         pitchFieldElement.appendChild(pitchText);
 
@@ -271,6 +264,33 @@ Midi.trackToXml = function(track, n, pitchTable) {
     }
   }
   return startBlockElement;
+};
+
+/**
+ * Convert a chord of MIDI pitches into [abcPitch, accidental] tuples.
+ * E.g. [41, 48, 53] -> [['G6', -1], ['B5', 0]]
+ * Uses the pitch table to transpose and fold notes into ones compatible with
+ * the glockenspiel.  Folding may create duplicates, so filter those out.
+ * @param {!Array<number>} trackItem Array of MIDI pitches.  E.g. [84, 88]
+ * @param {!Map<number,!Array>} pitchTable Map of MIDI pitch values to
+ *     glockenspiel pitches.
+ */
+Midi.pitchesToChords = function(trackItem, pitchTable) {
+  const deDup = new Map();
+  for (const pitch of trackItem) {
+    const tuple = pitchTable.get(pitch);
+    deDup.set(String(tuple), tuple);
+  }
+  const newTrackItem = Array.from(deDup.values())
+  // Sort the [abcPitch, accidental] tuples so that higher notes come first.
+  newTrackItem.sort(function(a, b) {
+    const [abcPitchA, accidentalA] = a;
+    const [abcPitchB, accidentalB] = b;
+    const sortableA = FieldPitch.NOTES.indexOf(abcPitchA) * 2 + accidentalA;
+    const sortableB = FieldPitch.NOTES.indexOf(abcPitchB) * 2 + accidentalB;
+    return sortableB - sortableA;
+  });
+  return newTrackItem;
 };
 
 /**
