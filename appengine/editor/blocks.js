@@ -24,8 +24,7 @@ Blockly.Blocks['music_pitch'] = {
 };
 
 Blockly.JavaScript['music_pitch'] = function(block) {
-  return [block.getFieldValue('PITCH'),
-      Blockly.JavaScript.ORDER_ATOMIC];
+  return [block.getFieldValue('PITCH'), Blockly.JavaScript.ORDER_ATOMIC];
 };
 
 Blockly.Blocks['music_note'] = {
@@ -74,24 +73,7 @@ Blockly.Blocks['music_note'] = {
 Blockly.JavaScript['music_note'] = function(block) {
   let pitch = Blockly.JavaScript.valueToCode(block, 'PITCH',
       Blockly.JavaScript.ORDER_COMMA) || 'C7';
-
-  // Look for computed flats/sharps, and replace with JS variables.
-  // E.g. 'C7 + 1' -> 'Db7'
-  const notes = Object.values(Music.fromMidi);
-  for (let i = 0; i < notes.length; i++) {
-    const down = notes[i - 1];  // May be undefined.
-    const origin = notes[i];
-    const up = notes[i + 1];  // May be undefined.
-    if (down && pitch === origin + ' - 1') {
-      pitch = down;
-    }
-    if (up && (pitch === origin + ' + 1' || pitch === '1 + ' + origin)) {
-      pitch = up;
-    }
-  }
-
-  return 'play(' + block.getFieldValue('DURATION') + ', ' + pitch +
-      ', \'block_id_' + block.id + '\');\n';
+  return `play(${block.getFieldValue('DURATION')}, ${pitch}, 'block_id_${block.id}');\n`;
 };
 
 Blockly.Blocks['music_rest'] = {
@@ -132,8 +114,7 @@ Blockly.Blocks['music_rest'] = {
 };
 
 Blockly.JavaScript['music_rest'] = function(block) {
-  return 'rest(' + block.getFieldValue('DURATION') +
-      ', \'block_id_' + block.id + '\');\n';
+  return `rest(${block.getFieldValue('DURATION')}, 'block_id_${block.id}');\n`;
 };
 
 Blockly.Blocks['music_start'] = {
@@ -169,9 +150,33 @@ Blockly.Blocks['music_start'] = {
 Blockly.JavaScript['music_start'] = function(block) {
   Music.startCount++;
   const statements_stack = Blockly.JavaScript.statementToCode(block, 'STACK');
-  const code = 'function start' + Music.startCount + '() {\n' +
-      statements_stack + '}\n';
+  const code = `function start${Music.startCount}() {\n${statements_stack}}\n`;
   // Add % so as not to collide with helper functions in definitions list.
   Blockly.JavaScript.definitions_['%start' + Music.startCount] = code;
   return null;
+};
+
+// Override the native math_arithmetic generator.
+const original_math_arithmetic = Blockly.JavaScript['math_arithmetic'];
+Blockly.JavaScript['math_arithmetic'] = function(block) {
+  let [code, order] = original_math_arithmetic(block);
+
+  // Look for computed flats/sharps, and replace with JS variables.
+  // E.g. 'C7 + 1' -> 'Db7'
+  const notes = Object.values(Music.fromMidi);
+  for (let i = 0; i < notes.length; i++) {
+    const down = notes[i - 1];  // May be undefined.
+    const origin = notes[i];
+    const up = notes[i + 1];  // May be undefined.
+    if (down && code === origin + ' - 1') {
+      code = down;
+      order = Blockly.JavaScript.ORDER_ATOMIC;
+    }
+    if (up && (code === origin + ' + 1' || code === '1 + ' + origin)) {
+      code = up;
+      order = Blockly.JavaScript.ORDER_ATOMIC;
+    }
+  }
+
+  return [code, order];
 };
