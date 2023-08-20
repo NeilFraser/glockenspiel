@@ -1081,6 +1081,10 @@ Music.executeChunk_ = function(thread) {
       console.warn('Thread ' + thread.stave + ' is running slowly.');
       return;
     }
+    if (Music.interpreter.getStatus() === Interpreter.Status.TASK) {
+      // Waiting for a setTimeout/setInterval.
+      return;
+    }
     if (thread.pauseUntil32nds > Music.clock32nds) {
       // Previously executed command (play or rest) requested a pause.
       return;

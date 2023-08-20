@@ -29,7 +29,7 @@ Modifications: None.
 * JS-Interpreter
 Source: https://github.com/NeilFraser/JS-Interpreter/blob/master/acorn.js
 Source: https://github.com/NeilFraser/JS-Interpreter/blob/master/interpreter.js
-Date: 12 August 2023
+Date: 21 August 2023
 Modifications: Compiled with SIMPLE instead of ADVANCED.
 
 * midi-parser-js
