@@ -897,6 +897,19 @@ Music.initInterpreter_ = function(interpreter, globalObject) {
   };
   interpreter.setProperty(globalObject, 'runThread',
       interpreter.createNativeFunction(runWrapper));
+
+  // Create 'console' global object.
+  const consoleWrapper = interpreter.nativeToPseudo({});
+  interpreter.setProperty(globalObject, 'console', consoleWrapper);
+
+  // Define 'console.log/info/warn/error/dir' functions.
+  for (const name of ['log', 'info', 'warn', 'error', 'dir']) {
+    const wrapper = function(value) {
+      return console[name](String(value));
+    };
+    interpreter.setProperty(consoleWrapper, name,
+        interpreter.createNativeFunction(wrapper));
+  }
 };
 
 /**
