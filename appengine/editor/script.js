@@ -1088,7 +1088,11 @@ Music.executeChunk_ = function(thread) {
       // User error, terminate in shame.
       alert(e);
       console.log(e);
-      go = false;
+      // Dispose all threads to stop execution.
+      while (Music.threads.length) {
+        Music.threads[0].dispose();
+      }
+      return;
     }
     if (ticks-- === 0) {
       console.warn('Thread ' + thread.stave + ' is running slowly.');
