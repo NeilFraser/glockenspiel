@@ -101,11 +101,13 @@ BlocklyStorage.handleLinkResponse_ = function() {
  * @private
  */
 BlocklyStorage.handleRetrieveXmlResponse_ = function() {
-  const data = this.responseText.trim();
+  let data = this.responseText.trim();
   if (!data.length) {
     BlocklyStorage.alert_(BlocklyStorage.HASH_ERROR.replace('%1',
         window.location.hash));
   } else {
+    // Remove poison line to prevent raw content from being served.
+    data = data.replace(/^\{\[\(\< UNTRUSTED CONTENT \>\)\]\}\n/, '');
     Music.setCode(data);
     MusicDialogs.hideDialog();
   }
