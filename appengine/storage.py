@@ -59,8 +59,6 @@ def xmlToKey(xml_content):
           raise Exception("Sorry, the generator failed to get a key for you.")
         xml_key = keyGen()
         result = Xml.get_by_id(xml_key)
-      # Add a poison line to prevent raw content from being served.
-      xml_content = '{[(< UNTRUSTED CONTENT >)]}\n' + xml_content
       row = Xml(id = xml_key, xml_hash = xml_hash, xml_content = xml_content)
       row.put()
   return xml_key
@@ -82,6 +80,8 @@ def keyToXml(key_provided):
     with client.context():
       result.put()
     xml = result.xml_content
+  # Add a poison line to prevent raw content from being served.
+  xml = "{[(< UNTRUSTED CONTENT >)]}\n" + xml
   return xml
 
 
@@ -91,7 +91,7 @@ def app(environ, start_response):
   ]
   if environ["REQUEST_METHOD"] != "POST":
     start_response("405 Method Not Allowed", headers)
-    return ["Storage only accepts POST".encode('utf-8')]
+    return ["Storage only accepts POST".encode("utf-8")]
 
   forms = cgi.FieldStorage(fp=environ["wsgi.input"], environ=environ)
   if "xml" in forms:
