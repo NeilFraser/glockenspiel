@@ -80,8 +80,8 @@ def keyToXml(key_provided):
     with client.context():
       result.put()
     xml = result.xml_content
-  # Add a poison line to prevent raw content from being served.
-  xml = "{[(< UNTRUSTED CONTENT >)]}\n" + xml
+    # Add a poison line to prevent raw content from being served.
+    xml = "{[(< UNTRUSTED CONTENT >)]}\n" + xml
   return xml
 
 
