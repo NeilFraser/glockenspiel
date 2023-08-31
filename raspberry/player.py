@@ -179,11 +179,12 @@ def startup():
 
 def fetch():
   # Check to see if there's a new tune waiting on App Engine.
-  global new_data
+  global new_data, last_status_time
   try:
     text = requests.get(FETCH_URL).text
   except Exception as e:
     print("Failure to fetch: %s\n" % e)
+    last_status_time = time.time()
     return
   if text.strip():
     try:
@@ -191,6 +192,11 @@ def fetch():
       new_data = validateData(unvalidated_data)
     except Exception as e:
       print("Invalid JSON: %s\n" % e)
+    last_status_time = time.time()
+  elif last_status_time + 60 > time.time():
+    # Print an "I'm still alive" message once a minute.
+    last_status_time = time.time()
+    print("Still waiting for next tune.\n")
 
 
 def validateData(unvalidated_data):
@@ -244,6 +250,9 @@ f.daemon = True
 f.start()
 
 startup()
+
+# Global variable used for last "I'm still alive" status message.
+last_status_time = time.time()
 
 while(True):
   fetch()
