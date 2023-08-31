@@ -192,7 +192,7 @@ def fetch():
     except Exception as e:
       print("Invalid JSON: %s\n" % e)
     last_status_time = time.time()
-  elif last_status_time + 60 > time.time():
+  elif last_status_time + 60 < time.time():
     # Print an "I'm still alive" message once a minute.
     last_status_time = time.time()
     print("Still waiting for next tune.\n")
