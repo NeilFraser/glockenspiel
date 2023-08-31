@@ -67,7 +67,6 @@ RESET_PIN = 21
 # to the play thread.
 new_data = None
 
-print("Watching %s...\n" % FETCH_URL)
 
 class PlayForever(threading.Thread):
   """
@@ -90,7 +89,7 @@ class PlayForever(threading.Thread):
     while(True):
       if new_data:
         if stream:
-          print("Interrupting current tune\n")
+          print("Interrupting current tune.\n")
           # Insert a pause between the old tune and the new one.
           time.sleep(1)
 
@@ -181,7 +180,7 @@ def fetch():
   # Check to see if there's a new tune waiting on App Engine.
   global new_data, last_status_time
   try:
-    text = requests.get(FETCH_URL).text
+    text = requests.get(FETCH_URL, timeout=60).text
   except Exception as e:
     print("Failure to fetch: %s\n" % e)
     last_status_time = time.time()
@@ -244,7 +243,6 @@ def validateData(unvalidated_data):
   }
 
 
-
 f = PlayForever()
 f.daemon = True
 f.start()
@@ -254,6 +252,7 @@ startup()
 # Global variable used for last "I'm still alive" status message.
 last_status_time = time.time()
 
+print("Watching %s...\n" % FETCH_URL)
 while(True):
   fetch()
   time.sleep(5)
