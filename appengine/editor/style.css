@@ -327,8 +327,13 @@ button.primary {
   opacity: .6;
 }
 
+#livestreamButton {
+  margin-left: 20px;
+  visibility: hidden;
+}
+
 #submitButton {
-  margin-left: 173px;
+  margin-left: 10px;
 }
 
 /* Slider. */
