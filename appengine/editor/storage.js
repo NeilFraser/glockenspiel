@@ -28,7 +28,7 @@ BlocklyStorage.link = function() {
     return;
   }
   const code = Music.getCode();
-  BlocklyStorage.makeRequest_('/storage', 'xml=' + encodeURIComponent(code),
+  BlocklyStorage.makeRequest_('/save', 'POST', encodeURIComponent(code),
       BlocklyStorage.handleLinkResponse_);
 };
 
@@ -38,7 +38,7 @@ BlocklyStorage.link = function() {
  */
 BlocklyStorage.retrieveXml = function(key) {
   MusicDialogs.showLoading();
-  BlocklyStorage.makeRequest_('/storage', 'key=' + encodeURIComponent(key),
+  BlocklyStorage.makeRequest_('/load', 'GET', encodeURIComponent(key),
       BlocklyStorage.handleRetrieveXmlResponse_);
 };
 
@@ -52,12 +52,13 @@ BlocklyStorage.httpRequest_ = null;
 /**
  * Fire a new AJAX request.
  * @param {string} url URL to fetch.
+ * @param {string} method 'GET' or 'POST'.
  * @param {string} data Body of data to be sent in request.
  * @param {!Function} onSuccess Function to call after request completes
  *    successfully.
  * @private
  */
-BlocklyStorage.makeRequest_ = function(url, data, onSuccess) {
+BlocklyStorage.makeRequest_ = function(url, method, data, onSuccess) {
   if (BlocklyStorage.httpRequest_) {
     // AJAX call is in-flight.
     BlocklyStorage.httpRequest_.abort();
@@ -76,10 +77,15 @@ BlocklyStorage.makeRequest_ = function(url, data, onSuccess) {
     }
     BlocklyStorage.httpRequest_ = null;
   };
-  BlocklyStorage.httpRequest_.open('POST', url);
-  BlocklyStorage.httpRequest_.setRequestHeader('Content-Type',
-      'application/x-www-form-urlencoded');
-  BlocklyStorage.httpRequest_.send(data);
+  if (method === 'GET') {
+    BlocklyStorage.httpRequest_.open(method, url + '?' + data);
+    BlocklyStorage.httpRequest_.send();
+  } else if (method === 'POST') {
+    BlocklyStorage.httpRequest_.open(method, url);
+    BlocklyStorage.httpRequest_.setRequestHeader('Content-Type',
+        'application/x-www-form-urlencoded');
+    BlocklyStorage.httpRequest_.send(data);
+  }
 };
 
 /**
@@ -125,5 +131,5 @@ BlocklyStorage.alert_ = function(message) {
 };
 
 BlocklyStorage.HTTPREQUEST_ERROR = 'There was a problem with the request.\n';
-BlocklyStorage.LINK_ALERT = 'Share your blocks with this link:\n\n%1';
-BlocklyStorage.HASH_ERROR = 'Sorry, "%1" doesn\'t correspond with any saved Blockly file.';
+BlocklyStorage.LINK_ALERT = 'Share your program with this link:\n\n%1';
+BlocklyStorage.HASH_ERROR = 'Sorry, "%1" doesn\'t correspond with any saved music file.';

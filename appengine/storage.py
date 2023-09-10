@@ -18,9 +18,6 @@ limitations under the License.
 """Store and retrieve XML with App Engine.
 """
 
-__author__ = "q.neutron@gmail.com (Quynh Neutron)"
-
-import cgi
 import hashlib
 from random import randint
 from google.cloud import ndb
@@ -85,19 +82,21 @@ def keyToXml(key_provided):
   return xml
 
 
-def app(environ, start_response):
+def save(start_response, data):
   headers = [
     ("Content-Type", "text/plain")
   ]
-  if environ["REQUEST_METHOD"] != "POST":
-    start_response("405 Method Not Allowed", headers)
-    return ["Storage only accepts POST".encode("utf-8")]
+  out = xmlToKey(data)
 
-  forms = cgi.FieldStorage(fp=environ["wsgi.input"], environ=environ)
-  if "xml" in forms:
-    out = xmlToKey(forms["xml"].value)
-  elif "key" in forms:
-    out = keyToXml(forms["key"].value)
+  start_response("200 OK", headers)
+  return [out.encode("utf-8")]
+
+def load(start_response, key):
+  headers = [
+    ("Content-Type", "text/plain")
+  ]
+  if key:
+    out = keyToXml(key)
   else:
     out = ""
 

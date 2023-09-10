@@ -14,11 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import cgi
 import datetime
 import expiration
 import storage
 from google.cloud import ndb
+from urllib.parse import unquote
 
 
 # Datastore models.
@@ -33,21 +33,35 @@ class Time(ndb.Model):
 # Route to requested handler.
 def app(environ, start_response):
   if environ["PATH_INFO"] == "/":
-    return redirect(environ, start_response)
+    return redirect(start_response)
   if environ["PATH_INFO"] == "/submit":
-    return submit(environ, start_response)
+    data = parse_post(environ)
+    return submit(start_response, data)
   if environ["PATH_INFO"] == "/fetch":
-    return fetch(environ, start_response)
-  if environ["PATH_INFO"] == "/storage":
-    return storage.app(environ, start_response)
+    return fetch(start_response)
+  if environ["PATH_INFO"] == "/save":
+    data = parse_post(environ)
+    return storage.save(start_response, data)
+  if environ["PATH_INFO"] == "/load":
+    return storage.load(start_response, environ["QUERY_STRING"])
   if environ["PATH_INFO"] == "/expiration":
-    return expiration.app(environ, start_response)
+    return expiration.app(start_response)
   start_response("404 Not Found", [])
   return [b"Page not found."]
 
+# Parse POST data as a single blob.
+def parse_post(environ):
+  if environ["REQUEST_METHOD"] != "POST":
+    raise Exception("Method must be POST")
+  if ("CONTENT_TYPE" in environ and
+      environ["CONTENT_TYPE"] != "application/x-www-form-urlencoded"):
+    raise Exception("Content type must be application/x-www-form-urlencoded")
+  fp = environ["wsgi.input"]
+  data = fp.read().decode()
+  return unquote(data)
 
 # Redirect for root directory.
-def redirect(environ, start_response):
+def redirect(start_response):
   headers = [
     ("Location", "/editor/index.html")
   ]
@@ -56,10 +70,7 @@ def redirect(environ, start_response):
 
 
 # Store the latest tune in Datastore using App Engine.
-def submit(environ, start_response):
-  forms = cgi.FieldStorage(fp=environ["wsgi.input"], environ=environ)
-  data = forms["data"].value
-
+def submit(start_response, data):
   client = ndb.Client()
   with client.context():
     row = Tune(id="PLAY", data=data)
@@ -80,7 +91,7 @@ def submit(environ, start_response):
 
 
 # Fetch the latest tune from Datastore using App Engine.
-def fetch(environ, start_response):
+def fetch(start_response):
   out = ""
   client = ndb.Client()
   with client.context():

@@ -41,7 +41,7 @@ def delete_expired():
       x.delete()
   return len(results)
 
-def app(environ, start_response):
+def app(start_response):
   headers = [
     ("Content-Type", "text/plain")
   ]
