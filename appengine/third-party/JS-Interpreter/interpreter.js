@@ -494,7 +494,7 @@ Interpreter.prototype.getStatus = function() {
 };
 
 /**
- * Initialize the global object with buitin properties and functions.
+ * Initialize the global object with built-in properties and functions.
  * @param {!Interpreter.Object} globalObject Global object.
  */
 Interpreter.prototype.initGlobal = function(globalObject) {
@@ -3265,7 +3265,7 @@ Interpreter.prototype.unwind = function(type, value, label) {
           state.value = value;
           return;
         } else if (type !== Interpreter.Completion.THROW) {
-          throw Error('Unsynatctic break/continue not rejected by Acorn');
+          throw Error('Unsyntactic break/continue not rejected by Acorn');
         }
         break;
       case 'Program':
