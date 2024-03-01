@@ -35,12 +35,12 @@ def app(environ, start_response):
   if environ["PATH_INFO"] == "/":
     return redirect(start_response)
   if environ["PATH_INFO"] == "/submit":
-    data = parse_post(environ)
+    data = parse_post(environ)["data"]
     return submit(start_response, data)
   if environ["PATH_INFO"] == "/fetch":
     return fetch(start_response)
   if environ["PATH_INFO"] == "/save":
-    data = parse_post(environ)
+    data = parse_post(environ)["data"]
     return storage.save(start_response, data)
   if environ["PATH_INFO"] == "/load":
     return storage.load(start_response, environ["QUERY_STRING"])
@@ -49,7 +49,9 @@ def app(environ, start_response):
   start_response("404 Not Found", [])
   return [b"Page not found."]
 
-# Parse POST data as a single blob.
+# Parse POST data (e.g. a=1&b=2) into a dictionary (e.g. {"a": 1, "b": 2}).
+# Very minimal parser.  Does not combine repeated names (a=1&a=2), ignores
+# valueless names (a&b), does not support isindex or multipart/form-data.
 def parse_post(environ):
   if environ["REQUEST_METHOD"] != "POST":
     raise Exception("Method must be POST")
@@ -58,7 +60,13 @@ def parse_post(environ):
     raise Exception("Content type must be application/x-www-form-urlencoded")
   fp = environ["wsgi.input"]
   data = fp.read().decode()
-  return unquote(data)
+  parts = data.split("&")
+  dict = {}
+  for part in parts:
+    tuple = part.split("=", 1)
+    if len(tuple) == 2:
+      dict[tuple[0]] = unquote(tuple[1])
+  return dict
 
 # Redirect for root directory.
 def redirect(start_response):
