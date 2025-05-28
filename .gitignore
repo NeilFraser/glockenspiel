@@ -1,4 +1,4 @@
 .DS_Store
 *.gcode
 *~.skp
-/appengine/compiler.jar
+/server/compiler.jar

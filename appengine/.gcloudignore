@@ -1,4 +1,0 @@
-# Do not upload these files.
-.*
-*.komodoproject
-/deploy
