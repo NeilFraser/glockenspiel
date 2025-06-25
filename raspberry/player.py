@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-"""Fetch tune from App Engine, and play it.
+"""Fetch tune from server, and play it.
 """
 
 import json
@@ -26,7 +26,7 @@ import threading
 import time
 import requests
 
-FETCH_URL = "https://glockenspiel.appspot.com/fetch"
+FETCH_URL = "https://neil.fraser.name/scripts/glockenspiel/fetch.py"
 
 # Strike time for hammer in seconds.
 STRIKE_TIME = 8 / 1000.0
@@ -177,7 +177,7 @@ def startup():
   time.sleep(5)
 
 def fetch():
-  # Check to see if there's a new tune waiting on App Engine.
+  # Check to see if there's a new tune waiting on server.
   global new_data, last_status_time
   try:
     text = requests.get(FETCH_URL, timeout=60).text

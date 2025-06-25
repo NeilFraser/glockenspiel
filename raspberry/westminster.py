@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-"""Compose the Westminster Quarters for the current time, and send to App Engine.
+"""Compose the Westminster Quarters for the current time, and send to server.
 """
 
 import json
@@ -23,8 +23,8 @@ import requests
 from datetime import datetime
 from time import sleep
 
-# App Engine submission page.
-SUBMIT_URL = "https://glockenspiel.appspot.com/submit"
+# Server submission page.
+SUBMIT_URL = "https://neil.fraser.name/scripts/glockenspiel/submit.py"
 
 # Larger tempo is slower.
 TEMPO = 512

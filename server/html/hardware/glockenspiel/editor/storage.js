@@ -28,18 +28,18 @@ BlocklyStorage.link = function() {
     return;
   }
   const code = Music.getCode();
-  BlocklyStorage.makeRequest_('/save', 'POST', encodeURIComponent(code),
+  BlocklyStorage.makeRequest_('/scripts/glockenspiel/storage.py', 'POST', encodeURIComponent(code),
       BlocklyStorage.handleLinkResponse_);
 };
 
 /**
- * Retrieve XML text from database using given key.
+ * Retrieve XML/JS text from database using given key.
  * @param {string} key Key to XML, obtained from href.
  */
 BlocklyStorage.retrieveXml = function(key) {
   MusicDialogs.showLoading();
-  BlocklyStorage.makeRequest_('/load', 'GET', encodeURIComponent(key),
-      BlocklyStorage.handleRetrieveXmlResponse_);
+  BlocklyStorage.makeRequest_(`/hardware/glockenspiel/data/${encodeURIComponent(key)}.glockenspiel`,
+      'GET', '', BlocklyStorage.handleRetrieveXmlResponse_);
 };
 
 /**

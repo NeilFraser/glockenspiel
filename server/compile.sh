@@ -1,4 +1,4 @@
-# Script for generating the compiled compiled.js file.
+# Script for generating the compiled glockenspiel_compressed.js file.
 
 # Download Closure Compiler if not already present.
 if test -f "compiler.jar"; then
@@ -22,12 +22,12 @@ java -jar ./compiler.jar \
     --externs externs/soundJS-externs.js \
     --externs externs/slider-externs.js \
     --externs externs/externs.js \
-    --js='editor/field_pitch.js' \
-    --js='editor/blocks.js' \
-    --js='editor/dialogs.js' \
-    --js='editor/storage.js' \
-    --js='editor/script.js' \
-    --js='editor/midi.js' \
-    --js_output_file editor/glockenspiel_compressed.js
+    --js='html/hardware/glockenspiel/editor/field_pitch.js' \
+    --js='html/hardware/glockenspiel/editor/blocks.js' \
+    --js='html/hardware/glockenspiel/editor/dialogs.js' \
+    --js='html/hardware/glockenspiel/editor/storage.js' \
+    --js='html/hardware/glockenspiel/editor/script.js' \
+    --js='html/hardware/glockenspiel/editor/midi.js' \
+    --js_output_file html/hardware/glockenspiel/editor/glockenspiel_compressed.js
 
 echo "Done"
