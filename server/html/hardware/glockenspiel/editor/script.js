@@ -1291,7 +1291,7 @@ Music.submitButtonClick = function(e) {
     return;
   }
   const xhr = new XMLHttpRequest();
-  xhr.open('POST', '/submit');
+  xhr.open('POST', '/scripts/glockenspiel/submit.py');
   xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
   xhr.onload = function() {
     const text = (xhr.status === 200) ? xhr.responseText :

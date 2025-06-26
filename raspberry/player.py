@@ -166,6 +166,7 @@ class PlayForever(threading.Thread):
     self.pi.write(RESET_PIN, 0)
     sys.exit(0)
 
+
 def startup():
   # On start up, play the entire scale.
   global new_data
@@ -176,26 +177,31 @@ def startup():
   new_data = {"tempo": 125, "stream": stream}
   time.sleep(5)
 
+
 def fetch():
   # Check to see if there's a new tune waiting on server.
+  # Return True if successfully connected, false if network fail.
   global new_data, last_status_time
   try:
     text = requests.get(FETCH_URL, timeout=60).text
   except Exception as e:
     print("Failure to fetch: %s\n" % e)
     last_status_time = time.time()
-    return
+    return False
   if text.strip():
     try:
       unvalidated_data = json.loads(text)
       new_data = validateData(unvalidated_data)
+      last_status_time = time.time()
     except Exception as e:
       print("Invalid JSON: %s\n" % e)
-    last_status_time = time.time()
+      last_status_time = time.time()
+      return False
   elif last_status_time + 60 < time.time():
     # Print an "I'm still alive" message once a minute.
     last_status_time = time.time()
     print("Still waiting for next tune.\n")
+  return True
 
 
 def validateData(unvalidated_data):
@@ -243,16 +249,23 @@ def validateData(unvalidated_data):
   }
 
 
-f = PlayForever()
-f.daemon = True
-f.start()
+print("Verifing %s is responding..." % FETCH_URL)
+if fetch():
+  print("Ok")
 
-startup()
+  f = PlayForever()
+  f.daemon = True
+  f.start()
 
-# Global variable used for last "I'm still alive" status message.
-last_status_time = time.time()
+  startup()
 
-print("Watching %s...\n" % FETCH_URL)
-while(True):
-  fetch()
-  time.sleep(5)
+  # Global variable used for last "I'm still alive" status message.
+  last_status_time = time.time()
+
+  print("Watching %s...\n" % FETCH_URL)
+  while(True):
+    time.sleep(5)
+    fetch()
+
+else:
+  print("Fail")

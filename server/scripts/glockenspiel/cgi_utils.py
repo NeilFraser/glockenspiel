@@ -8,7 +8,7 @@ Parse GET and POST data.
 
 
 from os import environ
-from urllib.parse import unquote
+from urllib.parse import unquote_plus
 from sys import stdin
 
 
@@ -32,7 +32,7 @@ def _parse(data):
   for part in parts:
     tuple = part.split("=", 1)
     if len(tuple) == 2:
-      dict[tuple[0]] = unquote(tuple[1])
+      dict[tuple[0]] = unquote_plus(tuple[1])
   return dict
 
 
