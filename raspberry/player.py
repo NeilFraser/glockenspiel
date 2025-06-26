@@ -249,6 +249,9 @@ def validateData(unvalidated_data):
   }
 
 
+# Global variable used for last "I'm still alive" status message.
+last_status_time = time.time()
+
 print("Verifing %s is responding..." % FETCH_URL)
 if fetch():
   print("Ok")
@@ -259,13 +262,15 @@ if fetch():
 
   startup()
 
-  # Global variable used for last "I'm still alive" status message.
-  last_status_time = time.time()
-
   print("Watching %s...\n" % FETCH_URL)
   while(True):
     time.sleep(5)
     fetch()
 
 else:
-  print("Fail")
+  print('''
+Failure to connect.
+If you need to configure the wifi, edit this file:
+/etc/wpa_supplicant/wpa_supplicant.conf
+Note that the Raspberry Pi Zero does not support 5GHz wifi.
+''')

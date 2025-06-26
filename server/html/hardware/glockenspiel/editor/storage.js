@@ -28,8 +28,8 @@ BlocklyStorage.link = function() {
     return;
   }
   const code = Music.getCode();
-  BlocklyStorage.makeRequest_('/scripts/glockenspiel/storage.py', 'POST', encodeURIComponent(code),
-      BlocklyStorage.handleLinkResponse_);
+  BlocklyStorage.makeRequest_('/scripts/glockenspiel/storage.py', 'POST',
+      'data=' + encodeURIComponent(code), BlocklyStorage.handleLinkResponse_);
 };
 
 /**
