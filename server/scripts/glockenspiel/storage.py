@@ -14,6 +14,9 @@ import re
 import cgi_utils
 
 
+# Absolute path to the data directory.
+DATA_PATH = "/home/neil/html/software/glockenspiel/data"
+
 POISON = "{[(< UNTRUSTED CONTENT >)]}\n"
 
 def keyGen(seed_string):
@@ -40,7 +43,7 @@ def check(data):
     print("Status: 406 Not Acceptable\n")
     print("No data.")
     return False
-  if not os.path.exists(cgi_utils.DATA_PATH):
+  if not os.path.exists(DATA_PATH):
     # Don't try saving to a new directory.
     print("Status: 406 Not Acceptable\n")
     print("Glockenspiel data directory doesn't exist.")

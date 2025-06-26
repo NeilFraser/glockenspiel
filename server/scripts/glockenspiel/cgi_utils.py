@@ -12,9 +12,6 @@ from urllib.parse import unquote
 from sys import stdin
 
 
-# Absolute path to the data directory.
-DATA_PATH = "/home/neil/html/software/glockenspiel/data"
-
 # Parse POST data (e.g. a=1&b=2) into a dictionary (e.g. {"a": 1, "b": 2}).
 # Very minimal parser.  Does not combine repeated names (a=1&a=2), ignores
 # valueless names (a&b), does not support isindex or multipart/form-data.
