@@ -15,7 +15,8 @@ import cgi_utils
 
 
 # Absolute path to the data directory.
-DATA_PATH = "/home/neil/html/software/glockenspiel/data"
+# Must end with a slash.
+DATA_PATH = "/home/neil/html/hardware/glockenspiel/data/"
 
 POISON = "{[(< UNTRUSTED CONTENT >)]}\n"
 
@@ -45,7 +46,7 @@ def check(data):
     return False
   if not os.path.exists(DATA_PATH):
     # Don't try saving to a new directory.
-    print("Status: 406 Not Acceptable\n")
+    print("Status: 500 Directory Not Found\n")
     print("Glockenspiel data directory doesn't exist.")
     return False
   if len(data) >= 1000000:
@@ -66,7 +67,7 @@ def store(data):
   key = keyGen(hash)
 
   # Save the data to a file.
-  file_name = cgi_utils.DATA_PATH + key + ".glockenspiel"
+  file_name = DATA_PATH + key + ".glockenspiel"
   with open(file_name, "w") as f:
     f.write(data)
   return key
